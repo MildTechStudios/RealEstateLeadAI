@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  /* Modern Dark Theme Palette */
+  --bg-dark: #020617;
+  /* Slate 950 */
+  --base-content: #f8fafc;
+
+  /* Glass Variables */
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(30, 41, 59, 0.4);
+  /* Slate 800 with opacity */
+  --glass-shine: rgba(255, 255, 255, 0.03);
+
+  /* Brand Colors */
+  --primary: #14b8a6;
+  /* Teal 500 */
+  --primary-glow: rgba(20, 184, 166, 0.5);
+
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-dark);
+  color: var(--base-content);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
