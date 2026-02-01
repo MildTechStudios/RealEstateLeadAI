@@ -10,6 +10,7 @@ import { Header } from './components/layout/Header'
 import { AgentInput } from './components/agent/AgentInput'
 import { AgentCard } from './components/agent/AgentCard'
 import { LeadsList } from './components/leads/LeadsList'
+import { BulkImport } from './components/import/BulkImport'
 import { Background } from './components/ui/Background'
 import { Tabs } from './components/layout/Tabs'
 import { extractProfile, isValidCBUrl } from './services/api'
@@ -85,14 +86,15 @@ function App() {
         <main className="container mx-auto px-4 py-8 max-w-5xl">
           <Tabs
             views={[
-              { id: 'import', label: 'Import Profile' },
+              { id: 'import', label: 'Single Import' },
+              { id: 'bulk', label: 'Bulk Import' },
               { id: 'leads', label: 'My Leads' }
             ]}
             currentView={view}
             onChange={setView}
           />
 
-          {view === 'import' ? (
+          {view === 'import' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Input Section */}
               {!profile && (
@@ -156,7 +158,15 @@ function App() {
                 </div>
               )}
             </div>
-          ) : (
+          )}
+
+          {view === 'bulk' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <BulkImport />
+            </div>
+          )}
+
+          {view === 'leads' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <LeadsList />
             </div>

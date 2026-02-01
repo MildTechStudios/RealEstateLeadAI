@@ -150,25 +150,97 @@ function extractPhones(markdown: string): string[] {
 
 /**
  * Extract image URLs that look like headshots
+ * Strategy: DOM first (reliable), then markdown fallback
  */
-function extractHeadshotUrl(markdown: string): string | null {
-    for (const pattern of HEADSHOT_PATTERNS) {
-        const matches = markdown.match(pattern);
-        if (matches && matches.length > 0) {
-            // Prefer larger images, filter out tiny icons
-            for (const url of matches) {
-                // Skip obvious non-headshots
-                if (url.includes('icon') ||
-                    url.includes('logo') ||
-                    url.includes('favicon') ||
-                    url.includes('1x1') ||
-                    url.includes('placeholder')) {
-                    continue;
+function extractHeadshotUrl(markdown: string, html?: string): string | null {
+    // EXCLUSION PATTERNS - these are NOT agent headshots
+    const OFFICE_PHOTO_PATTERNS = [
+        /office/i,
+        /building/i,
+        /exterior/i,
+        /storefront/i,
+        /location/i,
+        /branch/i,
+        /property/i,
+        /listing/i,
+        /home/i,
+        /house/i,
+    ];
+
+    function isOfficePhoto(url: string): boolean {
+        const lower = url.toLowerCase();
+        // Check URL path for office-related keywords
+        return OFFICE_PHOTO_PATTERNS.some(p => p.test(lower)) ||
+            lower.includes('/offices/') ||
+            lower.includes('/properties/') ||
+            lower.includes('/listings/');
+    }
+
+    function isValidHeadshot(url: string): boolean {
+        // Must be an image
+        if (!/\.(jpg|jpeg|png|webp)/i.test(url)) return false;
+        // Skip icons, logos, tiny images
+        if (/icon|logo|favicon|1x1|placeholder|sprite/i.test(url)) return false;
+        // Skip office photos
+        if (isOfficePhoto(url)) return false;
+        return true;
+    }
+
+    // STRATEGY 1: DOM-Based (Most Reliable)
+    if (html) {
+        const $ = cheerio.load(html);
+
+        // Common CB agent headshot selectors
+        const headshotSelectors = [
+            'img[alt*="photo" i]',
+            'img[alt*="headshot" i]',
+            'img[class*="agent" i]',
+            'img[class*="headshot" i]',
+            'img[class*="photo" i]',
+            'img[class*="avatar" i]',
+            '.agent-photo img',
+            '.agent-headshot img',
+            '.profile-photo img',
+            '[data-testid*="photo"] img',
+            '[data-testid*="headshot"] img',
+        ];
+
+        for (const selector of headshotSelectors) {
+            const img = $(selector).first();
+            if (img.length) {
+                const src = img.attr('src') || img.attr('data-src');
+                if (src && isValidHeadshot(src)) {
+                    return src;
                 }
-                return url;
+            }
+        }
+
+        // Fallback: Find first large image in main content area
+        const mainImages = $('main img, [role="main"] img, .content img, article img').toArray();
+        for (const el of mainImages) {
+            const src = $(el).attr('src') || $(el).attr('data-src');
+            if (src && isValidHeadshot(src)) {
+                // Prefer images with person-related alt text
+                const alt = $(el).attr('alt') || '';
+                if (/photo|headshot|agent|portrait/i.test(alt) || alt.length < 5) {
+                    return src;
+                }
             }
         }
     }
+
+    // STRATEGY 2: Markdown patterns (Fallback)
+    for (const pattern of HEADSHOT_PATTERNS) {
+        const matches = markdown.match(pattern);
+        if (matches && matches.length > 0) {
+            for (const url of matches) {
+                if (isValidHeadshot(url)) {
+                    return url;
+                }
+            }
+        }
+    }
+
     return null;
 }
 
@@ -572,7 +644,7 @@ export async function extractCBProfile(profileUrl: string): Promise<CBAgentProfi
 
     const emails = extractEmails(markdown);
     const phones = extractPhones(markdown);
-    const headshotUrl = extractHeadshotUrl(markdown);
+    const headshotUrl = extractHeadshotUrl(markdown, html);
     const logoUrl = extractLogoUrl(markdown);
     const socialLinks = extractSocialLinks(markdown);
     const officeInfo = extractOfficeInfo(markdown);
