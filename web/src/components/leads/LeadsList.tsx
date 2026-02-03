@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { getLeads, deleteLead, type DBProfile } from '../../services/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, Search, ExternalLink, Mail, Phone, MapPin, Globe } from 'lucide-react'
