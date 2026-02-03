@@ -85,7 +85,7 @@ app.get('/api/leads', async (req, res) => {
 });
 
 // Delete Lead
-import { deleteLead } from './services/db';
+import { deleteLead, updateLeadConfig, getLeadBySlug } from './services/db';
 
 app.delete('/api/leads/:id', async (req, res) => {
     try {
@@ -105,9 +105,128 @@ app.delete('/api/leads/:id', async (req, res) => {
     }
 });
 
+// Update Lead Website Config (slug, published)
+app.patch('/api/leads/:id/config', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { website_slug, website_published } = req.body;
+        console.log(`[API] Updating lead config: ${id}`, { website_slug, website_published });
+
+        const result = await updateLeadConfig(id, { website_slug, website_published });
+
+        if (!result.success) {
+            return res.status(500).json({ error: result.error });
+        }
+
+        res.json({ success: true });
+    } catch (error: any) {
+        console.error('[API] Error updating lead config:', error);
+        res.status(500).json({ error: 'Failed to update lead config' });
+    }
+});
+
+// Get Website by Slug (Public)
+app.get('/api/website/:slug', async (req, res) => {
+    try {
+        const { slug } = req.params;
+        console.log(`[API] Fetching website: ${slug}`);
+
+        const result = await getLeadBySlug(slug);
+
+        if (!result.success || !result.data) {
+            return res.status(404).json({ error: 'Website not found' });
+        }
+
+        res.json(result.data);
+    } catch (error: any) {
+        console.error('[API] Error fetching website:', error);
+        res.status(500).json({ error: 'Failed to fetch website' });
+    }
+});
+
+// Contact Form Submission
+import { sendContactEmail } from './services/email';
+
+// Update Lead Profile Data
+import { updateLead } from './services/db';
+
+app.patch('/api/leads/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        console.log(`[API] Updating lead profile: ${id}`);
+
+        const result = await updateLead(id, updateData);
+
+        if (!result.success) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        res.json({ success: true });
+    } catch (error: any) {
+        console.error('[API] Error updating lead:', error);
+        res.status(500).json({ error: 'Failed to update lead' });
+    }
+});
+
+app.post('/api/contact', async (req, res) => {
+    try {
+        const { name, email, phone, message, agentId } = req.body;
+
+        // Validate required fields
+        if (!name || !email || !message || !agentId) {
+            return res.status(400).json({ error: 'Missing required fields: name, email, message, agentId' });
+        }
+
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid email address' });
+        }
+
+        console.log(`[API] Contact form submission for agent ${agentId} from ${email}`);
+
+        // Fetch agent details to get their email
+        const { getLeadById } = await import('./services/db');
+        const agentResult = await getLeadById(agentId);
+
+        if (!agentResult.success || !agentResult.data) {
+            return res.status(404).json({ error: 'Agent not found' });
+        }
+
+        const agent = agentResult.data;
+        if (!agent.primary_email) {
+            return res.status(400).json({ error: 'Agent has no email configured' });
+        }
+
+        // Send email
+        const emailResult = await sendContactEmail({
+            visitorName: name,
+            visitorEmail: email,
+            visitorPhone: phone,
+            message,
+            agentName: agent.full_name,
+            agentEmail: agent.primary_email,
+        });
+
+        if (!emailResult.success) {
+            console.error('[API] Email send failed:', emailResult.error);
+            return res.status(500).json({ error: 'Failed to send message. Please try again.' });
+        }
+
+        res.json({ success: true, message: 'Your message has been sent!' });
+
+    } catch (error: any) {
+        console.error('[API] Contact form error:', error);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`\n🚀 Agent Scraper API running on http://localhost:${PORT}`);
     console.log(`   POST /api/extract - Extract & Auto-Save CB profile`);
+    console.log(`   POST /api/contact - Send contact form email`);
     console.log(`   GET  /api/health  - Health check\n`);
 });

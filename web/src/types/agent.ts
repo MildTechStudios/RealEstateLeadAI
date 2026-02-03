@@ -22,6 +22,7 @@ export interface CBAgentProfile {
     bio: string | null
     office_name: string | null
     office_address: string | null
+    license_number: string | null
     social_links: SocialLinks
     profile_url: string
     extraction_success: boolean

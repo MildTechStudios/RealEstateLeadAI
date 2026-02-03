@@ -20,6 +20,7 @@ export interface CBAgentProfile {
     bio: string | null;
     office_name: string | null;
     office_address: string | null;
+    license_number: string | null;
     social_links: {
         linkedin: string | null;
         facebook: string | null;
@@ -63,6 +64,28 @@ const GENERIC_CB_LOGOS = [
     /realogy.*logo/i,
     /logo.*blue/i, // Heuristic for common filename
 ];
+
+// EXCLUSION PATTERNS - these are NOT agent headshots
+const OFFICE_PHOTO_PATTERNS = [
+    /office/i,
+    /building/i,
+    /exterior/i,
+    /storefront/i,
+    /location/i,
+    /branch/i,
+    /property/i,
+    /listing/i,
+    /home/i,
+    /house/i,
+];
+
+function isOfficePhoto(url: string): boolean {
+    const lower = url.toLowerCase();
+    return OFFICE_PHOTO_PATTERNS.some(p => p.test(lower)) ||
+        lower.includes('/offices/') ||
+        lower.includes('/properties/') ||
+        lower.includes('/listings/');
+}
 
 /**
  * Extract agent name from markdown
@@ -136,6 +159,12 @@ function extractPhones(markdown: string): string[] {
 
     for (const phone of matches) {
         const digits = phone.replace(/\D/g, '');
+
+        // Filter out dummy numbers often found in placeholders
+        if (digits === '2000000000' || digits.startsWith('000') || /^(\d)\1+$/.test(digits)) {
+            continue;
+        }
+
         if (digits.length >= 10 && digits.length <= 11) {
             // Format: (XXX) XXX-XXXX
             const normalized = digits.length === 11
@@ -153,36 +182,22 @@ function extractPhones(markdown: string): string[] {
  * Strategy: DOM first (reliable), then markdown fallback
  */
 function extractHeadshotUrl(markdown: string, html?: string): string | null {
-    // EXCLUSION PATTERNS - these are NOT agent headshots
-    const OFFICE_PHOTO_PATTERNS = [
-        /office/i,
-        /building/i,
-        /exterior/i,
-        /storefront/i,
-        /location/i,
-        /branch/i,
-        /property/i,
-        /listing/i,
-        /home/i,
-        /house/i,
-    ];
+    // Use the module-level isOfficePhoto function
 
-    function isOfficePhoto(url: string): boolean {
-        const lower = url.toLowerCase();
-        // Check URL path for office-related keywords
-        return OFFICE_PHOTO_PATTERNS.some(p => p.test(lower)) ||
-            lower.includes('/offices/') ||
-            lower.includes('/properties/') ||
-            lower.includes('/listings/');
-    }
+    function isValidHeadshot(url: string, altText: string = ''): boolean {
+        const lowerUrl = url.toLowerCase();
+        const lowerAlt = altText.toLowerCase();
 
-    function isValidHeadshot(url: string): boolean {
         // Must be an image
         if (!/\.(jpg|jpeg|png|webp)/i.test(url)) return false;
-        // Skip icons, logos, tiny images
-        if (/icon|logo|favicon|1x1|placeholder|sprite/i.test(url)) return false;
+
+        // Skip icons, logos, tiny images, or known generic assets
+        if (/icon|logo|favicon|1x1|placeholder|sprite|brand|company/i.test(lowerUrl)) return false;
+        if (/logo|icon|brand/i.test(lowerAlt)) return false;
+
         // Skip office photos
         if (isOfficePhoto(url)) return false;
+
         return true;
     }
 
@@ -190,39 +205,44 @@ function extractHeadshotUrl(markdown: string, html?: string): string | null {
     if (html) {
         const $ = cheerio.load(html);
 
-        // Common CB agent headshot selectors
+        // Common CB agent headshot selectors - prioritized
         const headshotSelectors = [
-            'img[alt*="photo" i]',
+            'img.agent-photo',
+            'img.agent-headshot',
+            'img.profile-photo',
+            'img[alt*="Agent Photo" i]',
+            'div.agent-photo img',
+            'div.agent-headshot img',
+            // Specific CB selectors observed
+            '.AgentProfile_agentPhoto img',
+            '[data-testid="agent-photo"]',
+            // Fallbacks
             'img[alt*="headshot" i]',
-            'img[class*="agent" i]',
-            'img[class*="headshot" i]',
-            'img[class*="photo" i]',
-            'img[class*="avatar" i]',
-            '.agent-photo img',
-            '.agent-headshot img',
-            '.profile-photo img',
-            '[data-testid*="photo"] img',
-            '[data-testid*="headshot"] img',
+            'img[class*="agent" i][src*="photo"]',
         ];
 
         for (const selector of headshotSelectors) {
             const img = $(selector).first();
             if (img.length) {
                 const src = img.attr('src') || img.attr('data-src');
-                if (src && isValidHeadshot(src)) {
+                const alt = img.attr('alt') || '';
+
+                if (src && isValidHeadshot(src, alt)) {
                     return src;
                 }
             }
         }
 
-        // Fallback: Find first large image in main content area
+        // Fallback: Find first large image in main content area that looks like a person
+        // and explicitly verify it's NOT a logo using the new strict check
         const mainImages = $('main img, [role="main"] img, .content img, article img').toArray();
         for (const el of mainImages) {
             const src = $(el).attr('src') || $(el).attr('data-src');
-            if (src && isValidHeadshot(src)) {
+            const alt = $(el).attr('alt') || '';
+
+            if (src && isValidHeadshot(src, alt)) {
                 // Prefer images with person-related alt text
-                const alt = $(el).attr('alt') || '';
-                if (/photo|headshot|agent|portrait/i.test(alt) || alt.length < 5) {
+                if (/photo|headshot|agent|portrait/i.test(alt) || (alt.length > 3 && alt.length < 50)) {
                     return src;
                 }
             }
@@ -256,6 +276,7 @@ function isGenericLogo(url: string): boolean {
     // Check for specific common generic filenames seen in CB
     if (lowerUrl.includes('cbrealty_logo') ||
         lowerUrl.includes('coldwellbanker_logo') ||
+        lowerUrl.includes('coldwell-banker-logo') ||
         lowerUrl.includes('global-luxury-logo')) {
         return true;
     }
@@ -266,59 +287,150 @@ function isGenericLogo(url: string): boolean {
 /**
  * Extract Team/Brokerage logo URL (not building photos)
  */
-function extractLogoUrl(markdown: string): string | null {
+function extractLogoUrl(markdown: string, html?: string): string | null {
     let candidateUrl: string | null = null;
+    const fs = require('fs');
+    const debugLog: string[] = [];
 
-    // Strategy 1: Look for images in "Team" section specifically
-    const teamSectionMatch = markdown.match(
-        /(?:Team|My\s+Team|Partner|Group)[\s\S]{0,500}?!\[[^\]]*\]\(([^)]+)\)/i
-    );
-    if (teamSectionMatch && teamSectionMatch[1]) {
-        candidateUrl = teamSectionMatch[1].replace(/[)\]]+$/, '');
+    const log = (msg: string) => {
+        console.log(msg);
+        debugLog.push(msg);
+    };
+
+    log('[Logo Debug] Starting logo extraction...');
+
+    // Strategy 0: Find images in "Team" sections (HIGHEST PRIORITY)
+    // Look for sections with headers containing "Team" (e.g., "Karyn Wynne's Team")
+    if (html) {
+        const $ = cheerio.load(html);
+
+        // Debug: Check if "team" appears anywhere in HTML
+        const teamInHtml = html.toLowerCase().includes('team');
+        log(`[Logo Debug] HTML contains 'team': ${teamInHtml}`);
+
+        // Find headers containing "Team" and get images from their parent section
+        $('h1, h2, h3, h4, h5, h6, [class*="heading"], [class*="title"]').each((i, headerEl) => {
+            const headerText = $(headerEl).text().trim();
+            console.log(`[Logo Debug] Header ${i}: "${headerText.substring(0, 50)}"`);
+
+            if (candidateUrl) return; // Already found
+
+            if (headerText.toLowerCase().includes('team') && !headerText.toLowerCase().includes('contact')) {
+                console.log(`[Logo Debug] FOUND Team header: "${headerText}"`);
+
+                // Get the parent container or next sibling that might contain the logo
+                const parent = $(headerEl).parent();
+                const section = parent.length ? parent : $(headerEl).next();
+
+                console.log(`[Logo Debug] Searching for images in section with ${section.find('img').length} img tags`);
+
+                // Find first image in this section that's not an office photo or CB logo
+                section.find('img').each((imgIdx, imgEl) => {
+                    if (candidateUrl) return;
+
+                    const src = $(imgEl).attr('src') || $(imgEl).attr('data-src');
+                    const alt = $(imgEl).attr('alt') || '';
+
+                    console.log(`[Logo Debug] Image ${imgIdx}: src="${src?.substring(0, 80) || 'null'}", alt="${alt}"`);
+
+                    if (src && /\.(png|jpg|jpeg|svg|webp)/i.test(src)) {
+                        const isGeneric = isGenericLogo(src);
+                        const isOffice = isOfficePhoto(src);
+                        const isHeadshot = /headshot|portrait/i.test(alt);
+                        console.log(`[Logo Debug] Checks - isGeneric: ${isGeneric}, isOffice: ${isOffice}, isHeadshot: ${isHeadshot}`);
+
+                        if (!isGeneric && !isOffice && !isHeadshot) {
+                            candidateUrl = src;
+                            console.log(`[Logo Debug] ✓ Selected as team logo: ${src}`);
+                        }
+                    }
+                });
+            }
+        });
     }
 
-    // Strategy 2: Look for explicit "logo" in URL path
+    // Strategy 1: DOM-Based (Look for images with logo-related classes)
+    if (!candidateUrl && html) {
+        const $ = cheerio.load(html);
+        const logoSelectors = [
+            'img.team-logo',
+            'img.office-logo',
+            'img.partner-logo',
+            '.AgentProfile_teamLogo img',
+            '[data-testid="team-logo"]',
+            // Generic but often used for secondary logos
+            'img[alt*="logo" i]',
+            'img[src*="logo" i]'
+        ];
+
+        for (const selector of logoSelectors) {
+            $(selector).each((_, el) => {
+                if (candidateUrl) return; // Stop if found
+
+                const src = $(el).attr('src') || $(el).attr('data-src');
+                const alt = $(el).attr('alt') || '';
+
+                if (src) {
+                    // It must NOT be a headshot, and NOT be the generic CB logo
+                    if (!isGenericLogo(src) && !isOfficePhoto(src) && !/headshot|photo|agent|portrait/i.test(alt)) {
+                        // Check file extension/type if possible
+                        if (/\.(png|jpg|jpeg|svg|webp)/i.test(src)) {
+                            candidateUrl = src;
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Strategy 2: Markdown patterns (Fallback)
+    if (!candidateUrl) {
+        // Look for images in "Team" section specifically
+        const teamSectionMatch = markdown.match(
+            /(?:Team|My\s+Team|Partner|Group)[\s\S]{0,500}?!\[[^\]]*\]\(([^)]+)\)/i
+        );
+        if (teamSectionMatch && teamSectionMatch[1]) {
+            const url = teamSectionMatch[1].replace(/[)\]]+$/, '');
+            if (!isGenericLogo(url)) candidateUrl = url;
+        }
+    }
+
+    // Strategy 3: Look for explicit "logo" in URL path in markdown
     if (!candidateUrl) {
         const logoPathMatch = markdown.match(
             /https?:\/\/[^\s"')\]]+\/logos\/[^\s"')\]]+/i
         );
         if (logoPathMatch) {
-            candidateUrl = logoPathMatch[0].replace(/[)\]]+$/, '');
+            const url = logoPathMatch[0].replace(/[)\]]+$/, '');
+            if (!isGenericLogo(url)) candidateUrl = url;
         }
     }
 
-    // Strategy 3: Realogy CDN
+    // Strategy 4: Realogy CDN
     if (!candidateUrl) {
         const cdnMatch = markdown.match(/https?:\/\/images\.cloud\.realogyprod\.com\/[^\s"')\]]+/gi);
         if (cdnMatch && cdnMatch.length > 0) {
             const found = cdnMatch.find(url =>
                 url.includes('/logos/') &&
                 !url.includes('/photos/') &&
-                !url.includes('/offices/')
+                !url.includes('/offices/') &&
+                !isGenericLogo(url)
             );
             if (found) candidateUrl = found.replace(/[)\]]+$/, '');
         }
     }
 
-    // Strategy 4: Company logos
-    if (!candidateUrl) {
-        const companyLogoMatch = markdown.match(
-            /https?:\/\/[^\s"')\]]+companies[^\s"')\]]+logos[^\s"')\]]+/i
-        );
-        if (companyLogoMatch) {
-            candidateUrl = companyLogoMatch[0].replace(/[)\]]+$/, '');
-        }
-    }
-
-    // Final Validation: If found, make sure it's NOT a generic CB logo
+    // Final Validation
     if (candidateUrl) {
-        // If it's a generic logo, we return null because we display the generic one by default
         if (isGenericLogo(candidateUrl)) {
+            console.log(`[Logo Debug] Final candidate is generic logo, returning null`);
             return null;
         }
+        console.log(`[Logo Debug] ✓ Final logo URL: ${candidateUrl}`);
         return candidateUrl;
     }
 
+    console.log(`[Logo Debug] No logo found`);
     return null;
 }
 
@@ -601,6 +713,13 @@ function extractBioFromHtml(html?: string): string | null {
     return null;
 }
 
+function extractLicense(markdown: string): string | null {
+    // Look for common license patterns: "Lic # 123", "DRE # 123", "TREC # 123"
+    const regex = /(?:Lic(?:ense)?|DRE|TREC|CalDRE|BRE)[.\s#]*(?:Number|No\.?|[#:])?[\s]*([0-9A-Z-]{4,})/i;
+    const match = markdown.match(regex);
+    return match ? match[1].trim() : null;
+}
+
 /**
  * Main extraction function for Coldwell Banker profiles
  */
@@ -626,6 +745,7 @@ export async function extractCBProfile(profileUrl: string): Promise<CBAgentProfi
             bio: null,
             office_name: null,
             office_address: null,
+            license_number: null,
             social_links: { linkedin: null, facebook: null, instagram: null, twitter: null, youtube: null },
             profile_url: profileUrl,
             extraction_success: false,
@@ -636,7 +756,17 @@ export async function extractCBProfile(profileUrl: string): Promise<CBAgentProfi
     const markdown = scrapeResult.data.markdown;
     const html = scrapeResult.data.html; // New field
     console.log(`[CB Extractor] Scraped ${markdown.length} markdown chars`);
-    if (html) console.log(`[CB Extractor] Scraped ${html.length} HTML chars`);
+    if (html) {
+        console.log(`[CB Extractor] Scraped ${html.length} HTML chars`);
+        // Debug: Save HTML to file for analysis
+        const fs = require('fs');
+        try {
+            fs.writeFileSync('debug_html.html', html, 'utf8');
+            console.log('[CB Extractor] Saved HTML to debug_html.html');
+        } catch (e) {
+            console.log('[CB Extractor] Could not save debug HTML');
+        }
+    }
 
     // Extract all fields
     const name = extractName(markdown);
@@ -645,9 +775,10 @@ export async function extractCBProfile(profileUrl: string): Promise<CBAgentProfi
     const emails = extractEmails(markdown);
     const phones = extractPhones(markdown);
     const headshotUrl = extractHeadshotUrl(markdown, html);
-    const logoUrl = extractLogoUrl(markdown);
+    const logoUrl = extractLogoUrl(markdown, html);
     const socialLinks = extractSocialLinks(markdown);
     const officeInfo = extractOfficeInfo(markdown);
+    const licenseNumber = extractLicense(markdown);
 
     // BIO STRATEGY: JSON-LD > DOM (Cheerio) > Meta Tags > Markdown
     // We prioritize DOM/JSON-LD as they are likely the full text sources
@@ -693,6 +824,7 @@ export async function extractCBProfile(profileUrl: string): Promise<CBAgentProfi
         bio,
         office_name: officeInfo.name,
         office_address: officeInfo.address,
+        license_number: licenseNumber,
         social_links: socialLinks,
         profile_url: profileUrl,
         extraction_success: !!name && (emails.length > 0 || phones.length > 0),
@@ -706,6 +838,7 @@ export async function extractCBProfile(profileUrl: string): Promise<CBAgentProfi
     console.log(`  Office: ${profile.office_phone || '(not found)'}`);
     console.log(`  All Phones: ${profile.all_phones.length > 0 ? profile.all_phones.join(', ') : '(none)'}`);
     console.log(`  Headshot: ${profile.headshot_url ? 'Found' : 'Not found'}`);
+    console.log(`  Logo: ${profile.logo_url ? 'Found' : 'Not found'}`);
     console.log(`  Social: ${Object.values(profile.social_links).filter(Boolean).length} found`);
     console.log(`  Bio: ${bio ? 'Found (' + bio.length + ' chars)' : 'Not found'}, Source: ${bioSource}`);
     console.log(`  Success: ${profile.extraction_success}`);

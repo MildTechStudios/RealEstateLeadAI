@@ -43,10 +43,16 @@ export async function saveProfile(profile: CBAgentProfile): Promise<{ success: b
 
     try {
         // Map the flattened CBAgentProfile to the schema expected by the table
-        // We use the 'raw_profile' JSONB column to store the full object structure
-        // allowing us to save new fields (like brokerage_logo_url) without immediate schema migrations.
 
-        const record = {
+        // Helper to generate a slug (simple version)
+        const generateSlug = (name: string) => {
+            return name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)+/g, '');
+        };
+
+        const record: any = {
             full_name: profile.full_name,
             brokerage: 'Coldwell Banker Realty',
             city: _extractCity(profile.office_address) || 'Unknown',
@@ -55,6 +61,16 @@ export async function saveProfile(profile: CBAgentProfile): Promise<{ success: b
             source_url: profile.profile_url,
             primary_email: profile.email,
             primary_phone: profile.mobile_phone || profile.office_phone,
+            office_phone: profile.office_phone,
+            license_number: profile.license_number,
+
+            // Default Website Config
+            // Use existing slug if available (will be handled by merge logic below or DB constraint)
+            // But we need a default if it's new.
+            // Actually, best place to handle "new vs existing" logic is AFTER checking existing.
+            // So we set these here, but might override from 'existing' later.
+            website_slug: generateSlug(profile.full_name),
+            website_published: true, // Force publish by default
 
             // Visuals
             headshot_url: profile.headshot_url,
@@ -79,7 +95,47 @@ export async function saveProfile(profile: CBAgentProfile): Promise<{ success: b
             updated_at: new Date().toISOString()
         };
 
+        // 1. Check if the agent already exists by source_url
+        const { data: existing, error: fetchError } = await client
+            .from('scraped_agents')
+            .select('*')
+            .eq('source_url', profile.profile_url)
+            .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = JSON object requested, multiple (or no) results returned
+            console.error('[DB] Error checking existing profile:', fetchError.message);
+            // Continue to upsert as fallback? Or fail? Let's buffer and try upsert.
+        }
+
+        if (existing) {
+            console.log(`[DB] Found existing profile ID: ${existing.id}`);
+
+            // PRESERVE MANUAL EDITS
+            // Strategies:
+            // A) If existing primary_email is different, keep existing (user likely edited it)
+            // B) If existing BIO is different, keep existing? (maybe dangerous if they want fresh bio)
+            // Let's stick strictly to what the user asked: "email updated everywhere".
+
+            if (existing.primary_email && existing.primary_email !== record.primary_email) {
+                console.log(`[DB] Preserving existing email (${existing.primary_email}) over scraped email (${record.primary_email})`);
+                record.primary_email = existing.primary_email;
+            }
+
+            // We can add similar logic for other fields if needed, e.g. phone
+            // WE ALSO PRESERVE THE EXISTING SLUG if it exists, to avoid breaking links
+            if (existing.website_slug) {
+                record.website_slug = existing.website_slug;
+            }
+
+            // We can add similar logic for other fields if needed, e.g. phone
+            if (existing.primary_phone && existing.primary_phone !== record.primary_phone) {
+                // For now, let phone update unless we want to lock it too.
+                // record.primary_phone = existing.primary_phone;
+            }
+        }
+
         // Upsert: Insert or Update if source_url exists
+        // (If existing, we just modified 'record' to match specific existing fields, so the update won't revert them)
         const { data, error } = await client
             .from('scraped_agents')
             .upsert(record, {
@@ -149,6 +205,133 @@ export async function deleteLead(id: string): Promise<{ success: boolean; error?
         return { success: true };
     } catch (err) {
         console.error('[DB] Error deleting lead:', err);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+}
+
+/**
+ * Update lead website configuration (slug, published status)
+ */
+export async function updateLeadConfig(
+    id: string,
+    config: { website_slug?: string; website_published?: boolean }
+): Promise<{ success: boolean; error?: string }> {
+    const client = getSupabaseClient();
+    if (!client) return { success: false, error: 'Database not configured' };
+
+    try {
+        const { error } = await client
+            .from('scraped_agents')
+            .update(config)
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err) {
+        console.error('[DB] Error updating lead config:', err);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+}
+
+/**
+ * Get a lead by its website slug
+ */
+export async function getLeadBySlug(slug: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    const client = getSupabaseClient();
+    if (!client) return { success: false, error: 'Database not configured' };
+
+    try {
+        const { data, error } = await client
+            .from('scraped_agents')
+            .select('*')
+            .eq('website_slug', slug)
+            .eq('website_published', true)
+            .single();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (err) {
+        console.error('[DB] Error fetching lead by slug:', err);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+}
+
+/**
+ * Get a lead by its ID
+ */
+export async function getLeadById(id: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    const client = getSupabaseClient();
+    if (!client) return { success: false, error: 'Database not configured' };
+
+    try {
+        const { data, error } = await client
+            .from('scraped_agents')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (err) {
+        console.error('[DB] Error fetching lead by ID:', err);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+}
+
+/**
+ * Update a lead's profile data
+ * Accepts partial data - only updates provided fields
+ */
+export interface LeadUpdateData {
+    full_name?: string;
+    primary_email?: string;
+    primary_phone?: string;
+    bio?: string;
+    city?: string;
+    state?: string;
+    office_name?: string;
+    office_address?: string;
+    facebook_url?: string;
+    linkedin_url?: string;
+    instagram_url?: string;
+    twitter_url?: string;
+    youtube_url?: string;
+    headshot_url?: string;
+}
+
+export async function updateLead(
+    id: string,
+    data: LeadUpdateData
+): Promise<{ success: boolean; error?: string }> {
+    const client = getSupabaseClient();
+    if (!client) return { success: false, error: 'Database not configured' };
+
+    try {
+        // Filter out undefined values
+        const cleanData: Record<string, any> = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (value !== undefined) {
+                cleanData[key] = value;
+            }
+        }
+
+        if (Object.keys(cleanData).length === 0) {
+            return { success: false, error: 'No data to update' };
+        }
+
+        cleanData.updated_at = new Date().toISOString();
+
+        console.log(`[DB] Updating lead ${id}:`, Object.keys(cleanData));
+
+        const { error } = await client
+            .from('scraped_agents')
+            .update(cleanData)
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err) {
+        console.error('[DB] Error updating lead:', err);
         return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
     }
 }

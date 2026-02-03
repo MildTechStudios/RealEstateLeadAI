@@ -14,23 +14,23 @@ interface AgentCardProps {
 export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) {
     return (
         <div className="relative group">
-            {/* Glow Effect */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+            {/* Glow Effect - Adjusted for Light Card */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
 
-            <div className="relative bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="relative bg-white/95 backdrop-blur-xl border border-white/40 rounded-2xl overflow-hidden shadow-xl text-slate-900">
                 {/* Success Banner */}
-                <div className="bg-teal-500/10 border-b border-white/5 p-4 flex items-center justify-between">
+                <div className="bg-teal-50 border-b border-teal-100 p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="bg-teal-500/20 p-1.5 rounded-full">
-                            <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="bg-teal-100 p-1.5 rounded-full">
+                            <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <span className="text-teal-400 font-medium tracking-wide text-sm">Extraction Successful</span>
+                        <span className="text-teal-700 font-medium tracking-wide text-sm">Extraction Successful</span>
                     </div>
                     {profile.saved_to_db && (
-                        <div className="flex items-center gap-2 bg-teal-500/20 px-3 py-1 rounded-full border border-teal-500/30 shadow-[0_0_10px_rgba(20,184,166,0.3)]">
-                            <span className="text-xs text-teal-300 font-medium">Auto-Saved</span>
+                        <div className="flex items-center gap-2 bg-teal-100 px-3 py-1 rounded-full border border-teal-200 shadow-sm">
+                            <span className="text-xs text-teal-700 font-medium">Auto-Saved</span>
                         </div>
                     )}
                 </div>
@@ -45,19 +45,26 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                                     <img
                                         src={profile.headshot_url}
                                         alt={profile.full_name}
-                                        className="relative w-40 h-40 rounded-2xl object-cover border border-white/10 shadow-lg z-10"
+                                        className="relative w-40 h-40 rounded-2xl object-cover border-4 border-white shadow-lg z-10"
                                     />
                                 </div>
                             ) : (
-                                <div className="w-40 h-40 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 backdrop-blur-md">
-                                    <svg className="w-12 h-12 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-40 h-40 rounded-2xl bg-slate-100 flex items-center justify-center border border-slate-200">
+                                    <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
                                 </div>
                             )}
 
+                            {/* Team Logo (if available) */}
+                            {profile.logo_url && (
+                                <div className="w-40 p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                                    <img src={profile.logo_url} alt="Team Logo" className="w-full h-12 object-contain" />
+                                </div>
+                            )}
+
                             {/* Brokerage Logo */}
-                            <div className="w-40 p-3 bg-white rounded-xl border border-white/10 shadow-sm">
+                            <div className="w-40 p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
                                 <img src={profile.brokerage_logo_url} alt="Brokerage Logo" className="w-full h-12 object-contain" />
                             </div>
                         </div>
@@ -65,29 +72,33 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                         {/* Info Column */}
                         <div className="flex-1 space-y-6">
                             <div className="space-y-1 text-center md:text-left">
-                                <h3 className="text-3xl font-bold text-white tracking-tight">{profile.full_name}</h3>
+                                <h3 className="text-3xl font-bold text-slate-900 tracking-tight">{profile.full_name}</h3>
                                 {profile.office_name && (
-                                    <p className="text-teal-400 font-medium">{profile.office_name}</p>
+                                    <p className="text-teal-600 font-medium">{profile.office_name}</p>
                                 )}
                             </div>
 
-                            {/* Contact Grid - Glass Tiles */}
+                            {/* Contact Grid - Light Tiles */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                                    <label className="text-xs text-slate-400 uppercase tracking-widest font-semibold block mb-1">Email</label>
-                                    <p className="text-slate-200 font-mono text-sm truncate">{profile.email || '—'}</p>
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition-all">
+                                    <label className="text-xs text-slate-500 uppercase tracking-widest font-semibold block mb-1">Email</label>
+                                    <p className="text-slate-900 font-mono text-sm truncate">{profile.email || '—'}</p>
                                 </div>
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                                    <label className="text-xs text-slate-400 uppercase tracking-widest font-semibold block mb-1">Mobile</label>
-                                    <p className="text-slate-200 font-mono text-sm">{profile.mobile_phone || '—'}</p>
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition-all">
+                                    <label className="text-xs text-slate-500 uppercase tracking-widest font-semibold block mb-1">Mobile</label>
+                                    <p className="text-slate-900 font-mono text-sm">{profile.mobile_phone || '—'}</p>
                                 </div>
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                                    <label className="text-xs text-slate-400 uppercase tracking-widest font-semibold block mb-1">Office</label>
-                                    <p className="text-slate-200 font-mono text-sm">{profile.office_phone || '—'}</p>
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition-all">
+                                    <label className="text-xs text-slate-500 uppercase tracking-widest font-semibold block mb-1">Office</label>
+                                    <p className="text-slate-900 font-mono text-sm">{profile.office_phone || '—'}</p>
                                 </div>
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                                    <label className="text-xs text-slate-400 uppercase tracking-widest font-semibold block mb-1">Address</label>
-                                    <p className="text-slate-200 font-medium text-sm truncate">{profile.office_address || '—'}</p>
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition-all">
+                                    <label className="text-xs text-slate-500 uppercase tracking-widest font-semibold block mb-1">Address</label>
+                                    <p className="text-slate-900 font-medium text-sm truncate">{profile.office_address || '—'}</p>
+                                </div>
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition-all">
+                                    <label className="text-xs text-slate-500 uppercase tracking-widest font-semibold block mb-1">License</label>
+                                    <p className="text-slate-900 font-mono text-sm">{profile.license_number || '—'}</p>
                                 </div>
                             </div>
 
@@ -100,7 +111,7 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                                         {[
                                             { key: 'facebook', icon: 'f', bg: 'bg-[#1877F2]' },
                                             { key: 'linkedin', icon: 'in', bg: 'bg-[#0A66C2]' },
-                                            { key: 'twitter', icon: '𝕏', bg: 'bg-black border border-white/20' },
+                                            { key: 'twitter', icon: '𝕏', bg: 'bg-black text-white' },
                                             { key: 'instagram', icon: 'IG', bg: 'bg-gradient-to-br from-purple-500 to-pink-500' },
                                             { key: 'youtube', icon: '▶', bg: 'bg-[#FF0000]' }
                                         ].map((platform) => {
@@ -108,22 +119,22 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                                             if (!url) return null;
                                             return (
                                                 <a key={platform.key} href={url} target="_blank" rel="noopener noreferrer"
-                                                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform ${platform.bg}`}>
+                                                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md hover:scale-110 transition-transform ${platform.bg}`}>
                                                     <span className="font-bold text-sm">{platform.icon}</span>
                                                 </a>
                                             );
                                         })}
                                         {Object.values(profile.social_links).every(v => !v) && (
-                                            <span className="text-slate-500 text-sm italic">No social profiles found</span>
+                                            <span className="text-slate-400 text-sm italic">No social profiles found</span>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Bio */}
                                 {profile.bio && (
-                                    <div className="bg-slate-950/30 p-5 rounded-xl border border-white/5">
-                                        <label className="text-xs text-teal-500 uppercase tracking-widest font-semibold block mb-2">About Agent</label>
-                                        <p className="text-slate-300 text-sm leading-relaxed max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                    <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                                        <label className="text-xs text-teal-600 uppercase tracking-widest font-semibold block mb-2">About Agent</label>
+                                        <p className="text-slate-600 text-sm leading-relaxed max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                             {profile.bio}
                                         </p>
                                     </div>
@@ -133,17 +144,17 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-4 mt-8 pt-8 border-t border-white/5">
+                    <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
                         <button
                             onClick={onSave}
                             disabled={state === 'saving' || state === 'saved'}
-                            className="flex-1 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-xl hover:from-teal-400 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center justify-center gap-2"
+                            className="flex-1 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-teal-500/25 flex items-center justify-center gap-2"
                         >
                             {state === 'saving' ? 'Saving...' : state === 'saved' ? 'Saved Successfully' : 'Save to Leads'}
                         </button>
                         <button
                             onClick={onCancel}
-                            className="px-8 py-3.5 bg-white/5 text-slate-300 font-medium rounded-xl hover:bg-white/10 hover:text-white border border-white/5 transition-all"
+                            className="px-8 py-3.5 bg-white text-slate-600 font-medium rounded-xl hover:bg-slate-50 border border-slate-200 transition-all hover:border-slate-300"
                         >
                             Cancel
                         </button>
