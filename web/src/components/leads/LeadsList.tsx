@@ -156,14 +156,25 @@ export function LeadsList() {
                                         <div className="sm:col-span-2 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {lead.website_slug && (
                                                 <a
-                                                    href={`/w/${lead.website_slug}`}
+                                                    href={lead.website_config?.custom_domain
+                                                        ? `https://${lead.website_config.custom_domain}`
+                                                        : `/w/${lead.website_slug}`
+                                                    }
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="p-2 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-lg transition-colors"
-                                                    title="Open Website"
+                                                    className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${lead.website_config?.custom_domain
+                                                            ? 'text-teal-400 bg-teal-500/10 hover:bg-teal-500/20'
+                                                            : 'text-slate-400 hover:text-teal-400 hover:bg-teal-500/10'
+                                                        }`}
+                                                    title={lead.website_config?.custom_domain ? `Custom Domain: ${lead.website_config.custom_domain}` : "Open Website"}
                                                 >
                                                     <Globe className="w-4 h-4" />
+                                                    {lead.website_config?.custom_domain && (
+                                                        <span className="text-xs font-medium hidden lg:inline-block">
+                                                            {lead.website_config.custom_domain}
+                                                        </span>
+                                                    )}
                                                 </a>
                                             )}
                                             <a
