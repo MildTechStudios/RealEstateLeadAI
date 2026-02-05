@@ -61,9 +61,16 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                 // If it already exists, just fetch the status to "adopt" it
                 if (errorCode === 'existing_project_domain') {
                     console.log('Domain already exists, fetching status...');
-                    setError(null); // Clear the error message so UI doesn't show "Failed to add domain"
-                    await checkStatus(domain);
-                    return; // checkStatus will update state
+                    setError(null);
+                    const result = await checkStatus(domain);
+                    if (!result) {
+                        setError({
+                            message: "This domain is connected to another Vercel project.",
+                            code: "existing_project_domain",
+                            solution: "Please remove it from the other project or contact support."
+                        } as any);
+                    }
+                    return; // checkStatus will update state if successful
                 }
 
                 const verificationList = Array.isArray(verification)
@@ -225,9 +232,14 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                 </form>
                 {error && (
                     <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                        <p className="text-red-400 text-xs font-mono break-all">
-                            {typeof error === 'object' ? JSON.stringify(error) : error}
-                        </p>
+                        <div className="text-red-400 text-xs font-mono break-all">
+                            {typeof error === 'object' ? (
+                                <>
+                                    <p className="font-bold">{(error as any).message || JSON.stringify(error)}</p>
+                                    {(error as any).solution && <p className="mt-1 text-slate-400">{(error as any).solution}</p>}
+                                </>
+                            ) : error}
+                        </div>
                     </div>
                 )}
             </div>
@@ -372,9 +384,14 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
 
             {error && (
                 <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
-                    <p className="text-red-400 text-xs font-mono break-all inline-block text-left">
-                        {typeof error === 'object' ? JSON.stringify(error) : error}
-                    </p>
+                    <div className="text-red-400 text-xs font-mono break-all">
+                        {typeof error === 'object' ? (
+                            <>
+                                <p className="font-bold">{(error as any).message || JSON.stringify(error)}</p>
+                                {(error as any).solution && <p className="mt-1 text-slate-400">{(error as any).solution}</p>}
+                            </>
+                        ) : error}
+                    </div>
                 </div>
             )}
         </div>
