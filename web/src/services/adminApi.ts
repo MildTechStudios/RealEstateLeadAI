@@ -136,8 +136,7 @@ export const adminApi = {
             })
 
             if (!response.ok) {
-                console.log('[adminApi] getDomainStatus failed:', response.status)
-                return null // Return null for ANY failure, not just 404
+                return null // Return null for ANY failure
             }
             return response.json()
         } catch (err) {
