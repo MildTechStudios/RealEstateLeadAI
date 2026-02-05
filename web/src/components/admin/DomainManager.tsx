@@ -2,23 +2,33 @@ import { useState, useEffect } from 'react'
 import { adminApi } from '../../services/adminApi'
 import { Globe, AlertTriangle, Loader2, X, RefreshCw } from 'lucide-react'
 
+// interface DomainManagerProps {
+//     slug: string
+//     token: string
+// } 
+// REMOVED IN FAVOR OF NEW PROPS IN COMPONENT DEFINITION BELOW
+
+// export function DomainManager({ token }: DomainManagerProps) { // Old prop
+// New props: We need the agent ID for config updates
 interface DomainManagerProps {
-    slug: string
-    token: string
+    agentId: string
+    initialDomain?: string // Optional pre-loaded domain
 }
 
-export function DomainManager({ token }: DomainManagerProps) {
-    const [domain, setDomain] = useState('')
+export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
+    const [domain, setDomain] = useState(initialDomain || '')
     const [status, setStatus] = useState<any>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [verifying, setVerifying] = useState(false)
 
-    // Load saved domain from config if available
+    // Load saved domain from config if available (only if not passed in)
+    // Actually, we should trust the passed-in props or fetch fresh config?
+    // Let's fetch fresh config to be safe
     const checkStatus = async (domainName: string) => {
         try {
             setVerifying(true)
-            const data = await adminApi.getDomainStatus(token, domainName)
+            const data = await adminApi.getDomainStatus(domainName)
             setStatus(data)
             return data
         } catch (err: any) {
@@ -37,7 +47,7 @@ export function DomainManager({ token }: DomainManagerProps) {
         setStatus(null)
 
         try {
-            const result = await adminApi.addDomain(token, domain)
+            const result = await adminApi.addDomain(domain)
             setStatus(result)
         } catch (err: any) {
             setError(err.message)
@@ -63,7 +73,7 @@ export function DomainManager({ token }: DomainManagerProps) {
         // This ensures the domain lookup works once DNS is configured
         try {
             console.log('[DomainManager] Saving custom_domain to config:', domain)
-            await adminApi.updateConfig(token, { custom_domain: domain })
+            await adminApi.updateConfig(agentId, { custom_domain: domain })
             console.log('[DomainManager] Domain saved to config successfully')
         } catch (configErr) {
             console.error('[DomainManager] Failed to save domain to config:', configErr)
@@ -78,7 +88,7 @@ export function DomainManager({ token }: DomainManagerProps) {
 
         setVerifying(true)
         try {
-            const result = await adminApi.verifyDomain(token, d)
+            const result = await adminApi.verifyDomain(d)
             // If verification fails (e.g. 404 or 409), the API throws.
             // But if it returns 200 with verified:false, we get the result.
             // If it threw, we might want to catch it and still try to Refresh Status?
@@ -88,7 +98,7 @@ export function DomainManager({ token }: DomainManagerProps) {
             if (err.details && err.details.code === 'not_found') {
                 try {
                     console.log('Domain missing from Vercel, re-adding...', d)
-                    const result = await adminApi.addDomain(token, d)
+                    const result = await adminApi.addDomain(d)
                     setStatus(result)
                     // If add succeeds (no 409), we are good!
                     return
@@ -135,8 +145,8 @@ export function DomainManager({ token }: DomainManagerProps) {
         const d = domain || status?.name
         setLoading(true)
         try {
-            await adminApi.removeDomain(token, d)
-            await adminApi.updateConfig(token, { custom_domain: null })
+            await adminApi.removeDomain(d)
+            await adminApi.updateConfig(agentId, { custom_domain: null })
             setDomain('')
             setStatus(null)
         } catch (err: any) {
@@ -149,8 +159,12 @@ export function DomainManager({ token }: DomainManagerProps) {
     // Attempt to load existing custom_domain from config on mount
     useEffect(() => {
         const loadConfig = async () => {
+            if (initialDomain) {
+                checkStatus(initialDomain)
+                return
+            }
             try {
-                const config = await adminApi.getConfig(token)
+                const config = await adminApi.getConfig(agentId)
                 if (config.custom_domain) {
                     setDomain(config.custom_domain)
                     checkStatus(config.custom_domain)
@@ -160,7 +174,7 @@ export function DomainManager({ token }: DomainManagerProps) {
             }
         }
         loadConfig()
-    }, [token])
+    }, [agentId])
 
     if (!status && !domain) {
         return (

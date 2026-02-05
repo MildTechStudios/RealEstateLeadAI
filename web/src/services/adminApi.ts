@@ -1,41 +1,43 @@
+
+
 export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
-interface AdminLoginResponse {
-    token: string
-    slug: string
+/**
+ * Helper to get Auth Headers (Reused from api.ts logic)
+ * Ideally we should export this from api.ts
+ */
+const getAuthHeaders = (): Record<string, string> => {
+    const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+    if (!key) return {}
+    try {
+        const session = JSON.parse(localStorage.getItem(key) || '{}')
+        if (session.access_token) {
+            return { 'Authorization': `Bearer ${session.access_token}` }
+        }
+    } catch (e) {
+        console.error('Error parsing auth token', e)
+    }
+    return {}
 }
 
 export const adminApi = {
-    login: async (slug: string, password: string): Promise<AdminLoginResponse> => {
-        const response = await fetch(`${API_BASE}/api/admin/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ slug, password }),
-        })
+    // Legacy Login removed. No more separate login.
 
-        if (!response.ok) {
-            const data = await response.json().catch(() => ({ error: 'Login failed' }))
-            throw new Error(data.error || 'Login failed')
-        }
-
-        return response.json()
-    },
-
-    getConfig: async (token: string) => {
-        const response = await fetch(`${API_BASE}/api/admin/config`, {
-            headers: { Authorization: `Bearer ${token}` },
+    getConfig: async (id: string) => {
+        const response = await fetch(`${API_BASE}/api/admin/config/${id}`, {
+            headers: getAuthHeaders(),
         })
 
         if (!response.ok) throw new Error('Failed to fetch config')
         return response.json()
     },
 
-    updateConfig: async (token: string, config: any) => {
-        const response = await fetch(`${API_BASE}/api/admin/config`, {
+    updateConfig: async (id: string, config: any) => {
+        const response = await fetch(`${API_BASE}/api/admin/config/${id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
+                ...getAuthHeaders(),
             },
             body: JSON.stringify(config),
         })
@@ -44,15 +46,13 @@ export const adminApi = {
         return response.json()
     },
 
-    uploadImage: async (token: string, file: File) => {
+    uploadImage: async (slug: string, file: File) => {
         const formData = new FormData()
         formData.append('file', file)
 
-        const response = await fetch(`${API_BASE}/api/admin/upload`, {
+        const response = await fetch(`${API_BASE}/api/admin/upload/${slug}`, {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+            headers: getAuthHeaders(), // No Content-Type for FormData
             body: formData,
         })
 
@@ -64,12 +64,12 @@ export const adminApi = {
     },
 
     // --- Domain Management ---
-    addDomain: async (token: string, domain: string) => {
+    addDomain: async (domain: string) => {
         const response = await fetch(`${API_BASE}/api/admin/domains`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
+                ...getAuthHeaders(),
             },
             body: JSON.stringify({ domain }),
         })
@@ -77,18 +77,15 @@ export const adminApi = {
         if (!response.ok) {
             const err = await response.json().catch(() => ({}))
             const error: any = new Error(err.message || err.error?.message || 'Failed to add domain')
-            // Attach full error body (which might contain verification info from backend)
-            // Backend sends `err.details` which is the Vercel error object (code, message, verification, etc.)
-            // So `err` is that object.
-            error.details = err;
+            error.details = err.details || err;
             throw error
         }
         return response.json()
     },
 
-    getDomainStatus: async (token: string, domain: string) => {
+    getDomainStatus: async (domain: string) => {
         const response = await fetch(`${API_BASE}/api/admin/domains/${domain}`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: getAuthHeaders(),
         })
 
         if (!response.ok) {
@@ -98,25 +95,25 @@ export const adminApi = {
         return response.json()
     },
 
-    verifyDomain: async (token: string, domain: string) => {
+    verifyDomain: async (domain: string) => {
         const response = await fetch(`${API_BASE}/api/admin/domains/${domain}/verify`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
+            headers: getAuthHeaders(),
         })
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({}))
             const error: any = new Error(err.message || err.error || 'Failed to verify domain')
-            error.details = err
+            error.details = err.details || err
             throw error
         }
         return response.json()
     },
 
-    removeDomain: async (token: string, domain: string) => {
+    removeDomain: async (domain: string) => {
         const response = await fetch(`${API_BASE}/api/admin/domains/${domain}`, {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
+            headers: getAuthHeaders(),
         })
 
         if (!response.ok) throw new Error('Failed to remove domain')

@@ -81,7 +81,15 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
             lowBio === 'no bio available'
     }
 
-    if (!isOpen) return null
+    // Add DomainManager import
+    import { DomainManager } from '../admin/DomainManager'
+
+    // ... existing code ...
+
+    // State for tabs
+    const [activeTab, setActiveTab] = useState<'profile' | 'domain'>('profile')
+
+    // ... existing handleSave ...
 
     return (
         <AnimatePresence>
@@ -96,7 +104,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
+                    className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Header */}
@@ -117,7 +125,23 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            {!isEditing ? (
+                            {/* Tabs */}
+                            <div className="flex bg-slate-800 rounded-lg p-1 mr-4">
+                                <button
+                                    onClick={() => setActiveTab('profile')}
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'profile' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    Profile
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('domain')}
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'domain' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    Domain
+                                </button>
+                            </div>
+
+                            {!isEditing && activeTab === 'profile' ? (
                                 <button
                                     onClick={() => setIsEditing(true)}
                                     className="flex items-center gap-2 px-4 py-2 bg-teal-500/20 text-teal-400 rounded-lg hover:bg-teal-500/30 transition-colors"
@@ -125,7 +149,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                                     <Edit2 className="w-4 h-4" />
                                     Edit
                                 </button>
-                            ) : (
+                            ) : activeTab === 'profile' && (
                                 <>
                                     <button
                                         onClick={handleCancel}
@@ -154,93 +178,105 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)] space-y-6">
-                        {error && (
-                            <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm">
-                                {error}
+                    <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)] space-y-6 flex-1">
+                        {activeTab === 'profile' ? (
+                            <>
+                                {error && (
+                                    <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {/* Basic Info */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Basic Information</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FieldRow icon={User} label="Full Name" name="full_name" value={formData.full_name} onChange={handleChange} isEditing={isEditing} />
+                                        <FieldRow icon={Mail} label="Email" name="primary_email" value={formData.primary_email} onChange={handleChange} isEditing={isEditing} type="email" />
+                                        <FieldRow icon={Phone} label="Phone" name="primary_phone" value={formData.primary_phone} onChange={handleChange} isEditing={isEditing} type="tel" />
+                                        <FieldRow icon={MapPin} label="City" name="city" value={formData.city} onChange={handleChange} isEditing={isEditing} />
+                                        <FieldRow icon={MapPin} label="State" name="state" value={formData.state} onChange={handleChange} isEditing={isEditing} />
+                                        <FieldRow icon={Building} label="Office Name" name="office_name" value={formData.office_name} onChange={handleChange} isEditing={isEditing} />
+                                    </div>
+                                    <FieldRow icon={Building} label="Office Address" name="office_address" value={formData.office_address} onChange={handleChange} isEditing={isEditing} fullWidth />
+                                </div>
+
+                                {/* Branding */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Branding</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <FieldRow icon={User} label="Team Logo URL" name="logo_url" value={formData.logo_url} onChange={handleChange} isEditing={isEditing} type="url" />
+                                            {formData.logo_url && !isEditing && (
+                                                <div className="p-2 bg-white rounded-lg border border-slate-700 w-fit">
+                                                    <img src={formData.logo_url} alt="Team Logo" className="h-8 object-contain" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <FieldRow icon={Building} label="Brokerage Logo URL" name="brokerage_logo_url" value={formData.brokerage_logo_url} onChange={handleChange} isEditing={isEditing} type="url" />
+                                            {formData.brokerage_logo_url && !isEditing && (
+                                                <div className="p-2 bg-white rounded-lg border border-slate-700 w-fit">
+                                                    <img src={formData.brokerage_logo_url} alt="Brokerage Logo" className="h-8 object-contain" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Bio */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Bio</h3>
+                                    {isEditing ? (
+                                        <textarea
+                                            name="bio"
+                                            value={formData.bio}
+                                            onChange={handleChange}
+                                            rows={4}
+                                            className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-none"
+                                            placeholder="Agent bio..."
+                                        />
+                                    ) : (
+                                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                                            {!isGenericBio(formData.bio) ? formData.bio : <span className="text-slate-500 italic">No bio available</span>}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Social Links */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Social Links</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FieldRow icon={Facebook} label="Facebook" name="facebook_url" value={formData.facebook_url} onChange={handleChange} isEditing={isEditing} type="url" />
+                                        <FieldRow icon={Linkedin} label="LinkedIn" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange} isEditing={isEditing} type="url" />
+                                        <FieldRow icon={Instagram} label="Instagram" name="instagram_url" value={formData.instagram_url} onChange={handleChange} isEditing={isEditing} type="url" />
+                                        <FieldRow icon={Twitter} label="Twitter" name="twitter_url" value={formData.twitter_url} onChange={handleChange} isEditing={isEditing} type="url" />
+                                        <FieldRow icon={Youtube} label="YouTube" name="youtube_url" value={formData.youtube_url} onChange={handleChange} isEditing={isEditing} type="url" />
+                                    </div>
+                                </div>
+
+                                {/* Source Link */}
+                                <div className="pt-4 border-t border-white/10">
+                                    <a
+                                        href={lead.source_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 text-sm transition-colors"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                        View Original Profile
+                                    </a>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="h-full">
+                                <h3 className="text-lg font-semibold text-white mb-4">Custom Domain Configuration</h3>
+                                <DomainManager
+                                    agentId={lead.id}
+                                    initialDomain={lead.website_config?.custom_domain}
+                                />
                             </div>
                         )}
-
-                        {/* Basic Info */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Basic Information</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FieldRow icon={User} label="Full Name" name="full_name" value={formData.full_name} onChange={handleChange} isEditing={isEditing} />
-                                <FieldRow icon={Mail} label="Email" name="primary_email" value={formData.primary_email} onChange={handleChange} isEditing={isEditing} type="email" />
-                                <FieldRow icon={Phone} label="Phone" name="primary_phone" value={formData.primary_phone} onChange={handleChange} isEditing={isEditing} type="tel" />
-                                <FieldRow icon={MapPin} label="City" name="city" value={formData.city} onChange={handleChange} isEditing={isEditing} />
-                                <FieldRow icon={MapPin} label="State" name="state" value={formData.state} onChange={handleChange} isEditing={isEditing} />
-                                <FieldRow icon={Building} label="Office Name" name="office_name" value={formData.office_name} onChange={handleChange} isEditing={isEditing} />
-                            </div>
-                            <FieldRow icon={Building} label="Office Address" name="office_address" value={formData.office_address} onChange={handleChange} isEditing={isEditing} fullWidth />
-                        </div>
-
-                        {/* Branding */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Branding</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <FieldRow icon={User} label="Team Logo URL" name="logo_url" value={formData.logo_url} onChange={handleChange} isEditing={isEditing} type="url" />
-                                    {formData.logo_url && !isEditing && (
-                                        <div className="p-2 bg-white rounded-lg border border-slate-700 w-fit">
-                                            <img src={formData.logo_url} alt="Team Logo" className="h-8 object-contain" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <FieldRow icon={Building} label="Brokerage Logo URL" name="brokerage_logo_url" value={formData.brokerage_logo_url} onChange={handleChange} isEditing={isEditing} type="url" />
-                                    {formData.brokerage_logo_url && !isEditing && (
-                                        <div className="p-2 bg-white rounded-lg border border-slate-700 w-fit">
-                                            <img src={formData.brokerage_logo_url} alt="Brokerage Logo" className="h-8 object-contain" />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Bio */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Bio</h3>
-                            {isEditing ? (
-                                <textarea
-                                    name="bio"
-                                    value={formData.bio}
-                                    onChange={handleChange}
-                                    rows={4}
-                                    className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-none"
-                                    placeholder="Agent bio..."
-                                />
-                            ) : (
-                                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
-                                    {!isGenericBio(formData.bio) ? formData.bio : <span className="text-slate-500 italic">No bio available</span>}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Social Links */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Social Links</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FieldRow icon={Facebook} label="Facebook" name="facebook_url" value={formData.facebook_url} onChange={handleChange} isEditing={isEditing} type="url" />
-                                <FieldRow icon={Linkedin} label="LinkedIn" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange} isEditing={isEditing} type="url" />
-                                <FieldRow icon={Instagram} label="Instagram" name="instagram_url" value={formData.instagram_url} onChange={handleChange} isEditing={isEditing} type="url" />
-                                <FieldRow icon={Twitter} label="Twitter" name="twitter_url" value={formData.twitter_url} onChange={handleChange} isEditing={isEditing} type="url" />
-                                <FieldRow icon={Youtube} label="YouTube" name="youtube_url" value={formData.youtube_url} onChange={handleChange} isEditing={isEditing} type="url" />
-                            </div>
-                        </div>
-
-                        {/* Source Link */}
-                        <div className="pt-4 border-t border-white/10">
-                            <a
-                                href={lead.source_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 text-sm transition-colors"
-                            >
-                                <ExternalLink className="w-4 h-4" />
-                                View Original Profile
-                            </a>
-                        </div>
                     </div>
                 </motion.div>
             </motion.div>
