@@ -32,6 +32,7 @@ export interface DBProfile {
     source_url: string
     website_slug: string | null
     website_published: boolean
+    website_config: any | null
     created_at: string
     updated_at: string
 }

@@ -90,7 +90,7 @@ export function BookingModal({ isOpen, onClose, agentId, agentName }: BookingMod
                     >
                         {/* Header */}
                         <div className="p-6 border-b border-slate-100 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-amber-700/10 flex items-center justify-center text-amber-700">
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                 <Calendar className="w-6 h-6" />
                             </div>
                             <div>
@@ -142,7 +142,7 @@ export function BookingModal({ isOpen, onClose, agentId, agentName }: BookingMod
                                             onChange={handleChange}
                                             disabled={status === 'sending'}
                                             placeholder="John Doe"
-                                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all disabled:bg-slate-100"
+                                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-slate-100"
                                         />
                                     </div>
 
@@ -160,7 +160,7 @@ export function BookingModal({ isOpen, onClose, agentId, agentName }: BookingMod
                                                 onChange={handleChange}
                                                 disabled={status === 'sending'}
                                                 placeholder="john@email.com"
-                                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all disabled:bg-slate-100"
+                                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-slate-100"
                                             />
                                         </div>
                                         <div>
@@ -176,7 +176,7 @@ export function BookingModal({ isOpen, onClose, agentId, agentName }: BookingMod
                                                 onChange={handleChange}
                                                 disabled={status === 'sending'}
                                                 placeholder="(555) 123-4567"
-                                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all disabled:bg-slate-100"
+                                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-slate-100"
                                             />
                                         </div>
                                     </div>
@@ -194,7 +194,7 @@ export function BookingModal({ isOpen, onClose, agentId, agentName }: BookingMod
                                                 value={formData.preferredDate}
                                                 onChange={handleChange}
                                                 disabled={status === 'sending'}
-                                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all disabled:bg-slate-100"
+                                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-slate-100"
                                             />
                                         </div>
                                         <div>
@@ -208,7 +208,7 @@ export function BookingModal({ isOpen, onClose, agentId, agentName }: BookingMod
                                                 value={formData.preferredTime}
                                                 onChange={handleChange}
                                                 disabled={status === 'sending'}
-                                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all disabled:bg-slate-100"
+                                                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-slate-100"
                                             >
                                                 <option value="">Select...</option>
                                                 <option value="Morning (9am-12pm)">Morning (9am-12pm)</option>
@@ -230,14 +230,14 @@ export function BookingModal({ isOpen, onClose, agentId, agentName }: BookingMod
                                             onChange={handleChange}
                                             disabled={status === 'sending'}
                                             placeholder="Anything you'd like to discuss?"
-                                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all resize-none disabled:bg-slate-100"
+                                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none disabled:bg-slate-100"
                                         />
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={status === 'sending'}
-                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-800 text-white font-semibold rounded-lg transition-colors disabled:opacity-70"
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-secondary text-white font-semibold rounded-lg transition-colors disabled:opacity-70"
                                     >
                                         {status === 'sending' ? (
                                             <>

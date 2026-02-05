@@ -27,6 +27,12 @@ function getSupabaseClient(): SupabaseClient | null {
     return supabaseClient;
 }
 
+// Export the singleton function for lazy loading (safer for module init)
+export const getDb = getSupabaseClient;
+
+// Deprecated: Do not use top-level supabase const as it crashes if env vars aren't ready
+// export const supabase = getSupabaseClient()!;
+
 /**
  * Save extracted Coldwell Banker profile to the database
  * Uses UPSERT based on the unique source_url

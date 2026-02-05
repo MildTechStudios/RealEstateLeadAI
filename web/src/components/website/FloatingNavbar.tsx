@@ -55,7 +55,7 @@ export function FloatingNavbar({ agent, onBookClick }: FloatingNavbarProps) {
                     {/* Logo / Name */}
                     <a
                         href="#hero"
-                        className="font-serif font-bold text-lg text-slate-900 tracking-tight hover:text-amber-700 transition-colors"
+                        className="font-serif font-bold text-lg text-slate-900 tracking-tight hover:text-primary transition-colors"
                         style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                         {agent.full_name.split(' ')[0]}
@@ -73,7 +73,7 @@ export function FloatingNavbar({ agent, onBookClick }: FloatingNavbarProps) {
                                 className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors relative group"
                             >
                                 {link.label}
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-700 transition-all group-hover:w-full" />
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
                             </a>
                         ))}
                     </div>
@@ -140,7 +140,7 @@ export function FloatingNavbar({ agent, onBookClick }: FloatingNavbarProps) {
                                         key={link.id}
                                         href={`#${link.id}`}
                                         onClick={() => setIsOpen(false)}
-                                        className="block text-3xl font-serif text-slate-900 active:text-amber-700 transition-colors"
+                                        className="block text-3xl font-serif text-slate-900 active:text-primary transition-colors"
                                         style={{ fontFamily: "'Playfair Display', serif" }}
                                     >
                                         {link.label}

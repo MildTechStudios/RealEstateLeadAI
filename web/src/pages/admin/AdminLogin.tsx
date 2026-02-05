@@ -1,0 +1,81 @@
+import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { adminApi } from '../../services/adminApi'
+import { motion } from 'framer-motion'
+import { Lock } from 'lucide-react'
+
+export function AdminLogin() {
+    const { slug } = useParams()
+    const navigate = useNavigate()
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setError('')
+        setLoading(true)
+
+        try {
+            if (!slug) throw new Error('No website specified')
+
+            const { token } = await adminApi.login(slug, password)
+            localStorage.setItem(`admin_token_${slug}`, token)
+            navigate(`/w/${slug}/admin`)
+        } catch (err: any) {
+            setError(err.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl"
+            >
+                <div className="flex justify-center mb-6">
+                    <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center">
+                        <Lock className="w-6 h-6 text-teal-400" />
+                    </div>
+                </div>
+
+                <h1 className="text-xl font-semibold text-center text-white mb-2">Admin Access</h1>
+                <p className="text-slate-400 text-center text-sm mb-8">Enter password to edit this website</p>
+
+                <form onSubmit={handleLogin} className="space-y-4">
+                    <div>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
+                            className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-colors"
+                            autoFocus
+                        />
+                    </div>
+
+                    {error && (
+                        <p className="text-red-400 text-xs text-center">{error}</p>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-teal-500 text-slate-900 font-semibold py-3 rounded-lg hover:bg-teal-400 transition-colors disabled:opacity-50"
+                    >
+                        {loading ? 'Verifying...' : 'Login'}
+                    </button>
+
+                    <div className="text-center mt-4">
+                        <a href={`/w/${slug}`} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                            ← Back to Website
+                        </a>
+                    </div>
+                </form>
+            </motion.div>
+        </div>
+    )
+}

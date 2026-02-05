@@ -103,7 +103,7 @@ export function ContactForm({ agentId, agentName }: ContactFormProps) {
                         value={formData.name}
                         onChange={handleChange}
                         disabled={status === 'sending'}
-                        className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all disabled:bg-slate-100"
+                        className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-slate-100"
                         placeholder="John Doe"
                     />
                 </div>
@@ -120,7 +120,7 @@ export function ContactForm({ agentId, agentName }: ContactFormProps) {
                         value={formData.email}
                         onChange={handleChange}
                         disabled={status === 'sending'}
-                        className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all disabled:bg-slate-100"
+                        className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-slate-100"
                         placeholder="john@example.com"
                     />
                 </div>
@@ -136,7 +136,7 @@ export function ContactForm({ agentId, agentName }: ContactFormProps) {
                         value={formData.phone}
                         onChange={handleChange}
                         disabled={status === 'sending'}
-                        className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all disabled:bg-slate-100"
+                        className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-slate-100"
                         placeholder="(555) 123-4567"
                     />
                 </div>
@@ -153,7 +153,7 @@ export function ContactForm({ agentId, agentName }: ContactFormProps) {
                         value={formData.message}
                         onChange={handleChange}
                         disabled={status === 'sending'}
-                        className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all resize-none disabled:bg-slate-100"
+                        className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none disabled:bg-slate-100"
                         placeholder="I'm interested in discussing real estate opportunities..."
                     />
                 </div>
@@ -161,7 +161,7 @@ export function ContactForm({ agentId, agentName }: ContactFormProps) {
                 <button
                     type="submit"
                     disabled={status === 'sending'}
-                    className={`w-full flex items-center justify-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-800 text-white font-semibold rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed`}
+                    className={`w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-secondary text-white font-semibold rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed`}
                 >
                     {status === 'sending' ? (
                         <>

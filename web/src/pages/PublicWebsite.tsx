@@ -1,22 +1,178 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
-import { Mail, Phone, MapPin, Linkedin, Facebook, Instagram, Twitter, Youtube, TrendingUp, ArrowDown, Home, BarChart2, Building, BadgeCheck } from 'lucide-react'
+import { Mail, Phone, MapPin, Linkedin, Facebook, Instagram, Twitter, Youtube, TrendingUp, ArrowDown, Home, BarChart2, Building, BadgeCheck, Minus } from 'lucide-react'
 import { getWebsiteBySlug, type DBProfile } from '../services/api'
 import { getThemeConfig } from '../utils/theme'
 import { FloatingNavbar } from '../components/website/FloatingNavbar'
 import { ContactForm } from '../components/website/ContactForm'
 import { ServiceModal, type ServiceType } from '../components/website/ServiceModal'
 import { BookingModal } from '../components/website/BookingModal'
+// Admin Imports
+import { EditableText } from '../components/admin/EditableText'
+import { VisualEditorToolbar } from '../components/admin/VisualEditorToolbar'
+import { adminApi } from '../services/adminApi'
+import { useHistory } from '../hooks/useHistory'
 
-export function PublicWebsite() {
-    const { slug } = useParams<{ slug: string }>()
+export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
+    const { slug: paramSlug } = useParams<{ slug: string }>()
+    const slug = propSlug || paramSlug
+    const [searchParams] = useSearchParams()
+
+    // Data State
     const [agent, setAgent] = useState<DBProfile | null>(null)
+    const [savedConfig, setSavedConfig] = useState<any>({}) // Reference for dirty check
+    const { state: localConfig, setState: setLocalConfig, undo, redo, canUndo, canRedo, reset } = useHistory<any>({})
+
+
+    // UI State
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [activeModal, setActiveModal] = useState<ServiceType | null>(null)
     const [bookingOpen, setBookingOpen] = useState(false)
 
+    // Admin State
+    const [isEditing, setIsEditing] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+
+    // Derived State
+    const isDirty = useMemo(() => {
+        return JSON.stringify(localConfig) !== JSON.stringify(savedConfig)
+    }, [localConfig, savedConfig])
+
+    // Init Logic
+    useEffect(() => {
+        async function fetchAgent() {
+            if (!slug) return
+            try {
+                const data = await getWebsiteBySlug(slug)
+                setAgent(data)
+
+                const defaultTestimonials = [
+                    { quote: `${data.full_name.split(' ')[0]} was incredible to work with. The attention to detail and market knowledge made selling our home effortless.`, name: "James Peterson", location: "Dallas, TX", initials: "JP" },
+                    { quote: `We found our dream home thanks to ${data.full_name}'s persistence and dedication. Highly recommended!`, name: "Sarah Mitchell", location: "Frisco, TX", initials: "SM" },
+                    { quote: "Professional, knowledgeable, and always available. The best real estate experience we've ever had.", name: "Michael Chen", location: "Plano, TX", initials: "MC" },
+                    { quote: "Truly went above and beyond to ensure we got the best deal possible.", name: "Emily Rodriguez", location: "Fort Worth, TX", initials: "ER" }
+                ];
+
+                const config = data.website_config || {};
+
+                // Seed default testimonials if missing
+                if (!config.testimonials || config.testimonials.length === 0) {
+                    config.testimonials = defaultTestimonials;
+                }
+
+                setSavedConfig(config)
+                reset(config)
+
+
+                // Check if editing is requested and allowed
+                const token = localStorage.getItem(`admin_token_${slug}`)
+                if (searchParams.get('edit') === 'true' && token) {
+                    setIsEditing(true)
+                }
+            } catch (err: any) {
+                setError(err.message || 'Website not found')
+            } finally {
+                setLoading(false)
+            }
+        }
+
+
+        fetchAgent()
+    }, [slug, searchParams])
+
+    // Update Handler
+    const updateConfig = (keyOrUpdates: string | Record<string, any>, value?: any) => {
+        // useHistory's setState automatically pushes to history
+        // We create a new object to ensure memory reference changes
+        if (typeof keyOrUpdates === 'string') {
+            setLocalConfig({ ...localConfig, [keyOrUpdates]: value })
+        } else {
+            setLocalConfig({ ...localConfig, ...keyOrUpdates })
+        }
+    }
+
+    // Testimonial Helpers
+    const handleTestimonialChange = (index: number, field: string, value: string) => {
+        const currentTestimonials = [...(localConfig.testimonials || [])];
+        if (!currentTestimonials[index]) return;
+
+        currentTestimonials[index] = { ...currentTestimonials[index], [field]: value };
+        // Clean up initials if name changes
+        if (field === 'name') {
+            const parts = value.split(' ');
+            if (parts.length >= 2) {
+                currentTestimonials[index].initials = `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+            } else if (parts.length === 1) {
+                currentTestimonials[index].initials = parts[0].substring(0, 2).toUpperCase();
+            }
+        }
+
+        updateConfig('testimonials', currentTestimonials);
+    }
+
+    const addTestimonial = () => {
+        const newTestimonial = {
+            quote: "Enter your client's testimonial here...",
+            name: "Client Name",
+            location: "City, State",
+            initials: "CN"
+        };
+        const currentTestimonials = [...(localConfig.testimonials || [])];
+        updateConfig('testimonials', [...currentTestimonials, newTestimonial]);
+    }
+
+    const removeTestimonial = (index: number) => {
+        const currentTestimonials = [...(localConfig.testimonials || [])];
+        currentTestimonials.splice(index, 1);
+        updateConfig('testimonials', currentTestimonials);
+    }
+
+    // Keyboard Shortcuts for Undo/Redo
+    useEffect(() => {
+        if (!isEditing) return
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.metaKey || e.ctrlKey) {
+                if (e.key === 'z') {
+                    if (e.shiftKey) {
+                        e.preventDefault()
+                        redo()
+                    } else {
+                        e.preventDefault()
+                        undo()
+                    }
+                } else if (e.key === 'y') {
+                    e.preventDefault()
+                    redo()
+                }
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [isEditing, undo, redo])
+
+    // Save Handler
+    const handleSave = async () => {
+        if (!slug || !isDirty) return
+        setIsSaving(true)
+        try {
+            const token = localStorage.getItem(`admin_token_${slug}`)
+            if (token) {
+                await adminApi.updateConfig(token, localConfig)
+                setSavedConfig(localConfig) // Update reference state
+            }
+        } catch (err) {
+            console.error('Failed to save', err)
+            alert('Failed to save changes')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    // --- UI HOOKS ---
     const heroRef = useRef<HTMLDivElement>(null)
     const { scrollYProgress } = useScroll({
         target: heroRef,
@@ -37,20 +193,7 @@ export function PublicWebsite() {
         return getThemeConfig(agent.city, agent.state)
     }, [agent])
 
-    useEffect(() => {
-        async function fetchAgent() {
-            if (!slug) return
-            try {
-                const data = await getWebsiteBySlug(slug)
-                setAgent(data)
-            } catch (err: any) {
-                setError(err.message || 'Website not found')
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchAgent()
-    }, [slug])
+
 
     if (loading) {
         return (
@@ -69,9 +212,50 @@ export function PublicWebsite() {
         )
     }
 
+
+
     return (
-        <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] overflow-x-hidden"
+            style={{
+                fontFamily: "'Inter', sans-serif",
+                // @ts-ignore
+                "--primary": localConfig.primaryColor || theme.primaryColor || '#14b8a6',
+                // @ts-ignore
+                "--secondary": localConfig.secondaryColor || '#0f766e',
+                // Explicitly set Tailwind variables to ensure they override the theme defaults
+                // @ts-ignore
+                "--color-primary": localConfig.primaryColor || theme.primaryColor || '#14b8a6',
+                // @ts-ignore
+                "--color-secondary": localConfig.secondaryColor || '#0f766e',
+                // Theme Variables (Dynamic Dark Mode)
+                // @ts-ignore
+                "--bg-main": localConfig.bgMain || '#ffffff',
+                // @ts-ignore
+                "--bg-alt": localConfig.bgAlt || '#f8fafc', // slate-50
+                // @ts-ignore
+                "--text-main": localConfig.textMain || '#0f172a', // slate-900
+                // @ts-ignore
+                "--text-muted": localConfig.textMuted || '#64748b', // slate-500
+                // @ts-ignore
+                "--text-inv": localConfig.textInv || '#ffffff'
+            }}
+        >
             <FloatingNavbar agent={agent} onBookClick={() => setBookingOpen(true)} />
+
+            {isEditing && (
+                <VisualEditorToolbar
+                    isDirty={isDirty}
+                    onSave={handleSave}
+                    saving={isSaving}
+                    config={localConfig}
+                    agent={agent}
+                    onUpdateConfig={updateConfig}
+                    undo={undo}
+                    redo={redo}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                />
+            )}
 
             {/* ===== HERO SECTION - "Editorial Depth" ===== */}
             <section
@@ -87,7 +271,7 @@ export function PublicWebsite() {
                         className="w-full h-full object-cover opacity-90"
                     />
                     {/* Gradient Overlay for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-slate-50/90 via-slate-50/50 to-amber-50/30" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-main)]/90 via-[var(--bg-main)]/50 to-secondary/10" />
                 </div>
 
                 {/* Large Name Behind (Parallax Layer 1) */}
@@ -96,7 +280,7 @@ export function PublicWebsite() {
                     className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none select-none"
                 >
                     <h1
-                        className="text-[12vw] md:text-[14vw] lg:text-[12vw] font-bold text-slate-900/40 uppercase tracking-tighter text-center leading-[0.8] mix-blend-overlay"
+                        className="text-[12vw] md:text-[14vw] lg:text-[12vw] font-bold text-[var(--text-main)]/20 uppercase tracking-tighter text-center leading-[0.8] mix-blend-overlay"
                         style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                         {agent.full_name}
@@ -116,10 +300,10 @@ export function PublicWebsite() {
                             className="relative"
                         >
                             {/* Decorative Ring */}
-                            <div className="absolute -inset-4 rounded-full border-2 border-amber-700/30 animate-pulse" />
-                            <div className="w-56 h-56 md:w-72 md:h-72 mx-auto rounded-full overflow-hidden border-4 border-white shadow-2xl shadow-slate-900/20">
+                            <div className="absolute -inset-4 rounded-full border-2 border-primary/30 animate-pulse" />
+                            <div className="w-56 h-56 md:w-72 md:h-72 mx-auto rounded-full overflow-hidden border-4 border-[var(--bg-main)] shadow-2xl shadow-[var(--text-main)]/20">
                                 <img
-                                    src={agent.headshot_url}
+                                    src={localConfig.headshotUrl || agent.headshot_url}
                                     alt={agent.full_name}
                                     className="w-full h-full object-cover object-top"
                                 />
@@ -148,19 +332,23 @@ export function PublicWebsite() {
                         className="mt-8 relative"
                     >
                         {/* Text Shadow for readability */}
-                        <div className="absolute inset-0 bg-white/40 blur-xl -z-10 rounded-full scale-150 opacity-60"></div>
+                        <div className="absolute inset-0 bg-[var(--bg-main)]/40 blur-xl -z-10 rounded-full scale-150 opacity-60"></div>
 
-                        <p className="text-sm uppercase tracking-[0.3em] text-amber-700 font-bold mb-2 drop-shadow-sm">
+                        <p className="text-sm uppercase tracking-[0.3em] text-primary font-bold mb-2 drop-shadow-sm">
                             {agent.brokerage}
                         </p>
                         <h2
-                            className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 drop-shadow-sm"
+                            className="text-3xl md:text-4xl font-bold text-[var(--text-main)] mb-2 drop-shadow-sm"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
-                            {agent.full_name}
+                            <EditableText
+                                value={localConfig.customTitle || agent.full_name}
+                                isEditing={isEditing}
+                                onChange={(val) => updateConfig('customTitle', val)}
+                            />
                         </h2>
-                        <p className="text-slate-800 font-medium flex items-center justify-center gap-2 drop-shadow-sm">
-                            <MapPin className="w-4 h-4 text-slate-700" />
+                        <p className="text-[var(--text-main)]/90 font-medium flex items-center justify-center gap-2 drop-shadow-sm">
+                            <MapPin className="w-4 h-4 text-[var(--text-muted)]" />
                             {agent.city}, {agent.state}
                         </p>
                     </motion.div>
@@ -174,10 +362,15 @@ export function PublicWebsite() {
                     >
                         <a
                             href="#contact"
-                            className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl group"
+                            className="inline-flex items-center gap-3 px-8 py-4 bg-[var(--text-main)] text-[var(--bg-main)] font-semibold rounded-full hover:bg-primary hover:text-white transition-all shadow-lg hover:shadow-xl group"
+                            onClick={(e) => isEditing && e.preventDefault()}
                         >
                             <Mail className="w-5 h-5" />
-                            Get in Touch
+                            <EditableText
+                                value={localConfig.heroCtaText || "Get in Touch"}
+                                isEditing={isEditing}
+                                onChange={val => updateConfig('heroCtaText', val)}
+                            />
                             <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                         </a>
                     </motion.div>
@@ -197,9 +390,9 @@ export function PublicWebsite() {
             </section>
 
             {/* ===== SERVICES SECTION - "Signature Approach" ===== */}
-            <section id="services" className="py-32 px-6 bg-white relative overflow-hidden">
+            <section id="services" className="py-32 px-6 bg-[var(--bg-main)] relative overflow-hidden">
                 {/* Subtle Background Number */}
-                <div className="absolute top-20 right-0 text-[20rem] font-bold text-slate-50 leading-none select-none pointer-events-none -mr-20"
+                <div className="absolute top-20 right-0 text-[20rem] font-bold text-[var(--text-main)]/5 leading-none select-none pointer-events-none -mr-20"
                     style={{ fontFamily: "'Playfair Display', serif" }}>
                     01
                 </div>
@@ -211,15 +404,30 @@ export function PublicWebsite() {
                         viewport={{ once: true, margin: "-100px" }}
                         className="text-left mb-20 max-w-2xl"
                     >
-                        <span className="text-sm uppercase tracking-[0.3em] text-amber-700 font-bold">My Signature Approach</span>
+                        <span className="text-sm uppercase tracking-[0.3em] text-primary font-bold">
+                            <EditableText
+                                value={localConfig.servicesKicker || "My Signature Approach"}
+                                isEditing={isEditing}
+                                onChange={val => updateConfig('servicesKicker', val)}
+                            />
+                        </span>
                         <h2
-                            className="text-5xl md:text-6xl font-bold text-slate-900 mt-6 mb-6 leading-tight"
+                            className="text-5xl md:text-6xl font-bold text-[var(--text-main)] mt-6 mb-6 leading-tight"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
-                            Elevating the standard of real estate.
+                            <EditableText
+                                value={localConfig.servicesTitle || "Elevating the standard of real estate."}
+                                isEditing={isEditing}
+                                onChange={val => updateConfig('servicesTitle', val)}
+                            />
                         </h2>
-                        <p className="text-lg text-slate-500 leading-relaxed">
-                            Buying or selling a home is more than a transaction—it's a life-changing experience. I combine market intelligence with creative storytelling to deliver results that move you.
+                        <p className="text-lg text-[var(--text-muted)] leading-relaxed">
+                            <EditableText
+                                value={localConfig.servicesDesc || "Buying or selling a home is more than a transaction—it's a life-changing experience. I combine market intelligence with creative storytelling to deliver results that move you."}
+                                isEditing={isEditing}
+                                onChange={val => updateConfig('servicesDesc', val)}
+                                multiline
+                            />
                         </p>
                     </motion.div>
 
@@ -250,30 +458,39 @@ export function PublicWebsite() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-50px" }}
                                 transition={{ delay: i * 0.2, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                                className="group relative p-10 bg-slate-50 rounded-[2rem] hover:bg-slate-900 transition-colors duration-500 overflow-hidden"
+                                className="group relative p-10 bg-[var(--bg-alt)] rounded-[2rem] hover:bg-[var(--text-main)] transition-colors duration-500 overflow-hidden"
                             >
                                 {/* Hover Gradient Blob */}
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl -mr-32 -mt-32 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/20 rounded-full blur-3xl -mr-32 -mt-32 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
                                 <div className="relative z-10">
-                                    <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mb-8 shadow-sm group-hover:bg-amber-700 transition-colors duration-500">
-                                        <service.icon className="w-7 h-7 text-amber-700 group-hover:text-white transition-colors duration-500" />
+                                    <div className="w-16 h-16 rounded-2xl bg-[var(--bg-main)] flex items-center justify-center mb-8 shadow-sm group-hover:bg-primary transition-colors duration-500">
+                                        <service.icon className="w-7 h-7 text-primary group-hover:text-white transition-colors duration-500" />
                                     </div>
 
                                     <h3
-                                        className="text-2xl font-bold mb-4 text-slate-900 group-hover:text-white transition-colors duration-500"
+                                        className="text-2xl font-bold mb-4 text-[var(--text-main)] group-hover:text-[var(--bg-main)] transition-colors duration-500"
                                         style={{ fontFamily: "'Playfair Display', serif" }}
                                     >
-                                        {service.title}
+                                        <EditableText
+                                            value={localConfig[`serviceTitle${i}`] || service.title}
+                                            isEditing={isEditing}
+                                            onChange={val => updateConfig(`serviceTitle${i}`, val)}
+                                        />
                                     </h3>
 
-                                    <p className="text-slate-500 leading-relaxed group-hover:text-slate-300 transition-colors duration-500">
-                                        {service.desc}
-                                    </p>
+                                    <div className="text-[var(--text-muted)] leading-relaxed group-hover:text-[var(--bg-alt)] transition-colors duration-500">
+                                        <EditableText
+                                            value={localConfig[`serviceDesc${i}`] || service.desc}
+                                            isEditing={isEditing}
+                                            onChange={val => updateConfig(`serviceDesc${i}`, val)}
+                                            multiline
+                                        />
+                                    </div>
 
                                     <button
                                         onClick={() => setActiveModal(service.type)}
-                                        className="mt-8 pt-8 border-t border-slate-200 group-hover:border-slate-800 transition-colors duration-500 flex items-center gap-2 text-sm font-bold text-amber-700 group-hover:text-amber-500 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 delay-100 bg-transparent cursor-pointer"
+                                        className="mt-8 pt-8 border-t border-[var(--bg-alt)] group-hover:border-[var(--bg-main)]/20 transition-colors duration-500 flex items-center gap-2 text-sm font-bold text-[var(--text-main)] group-hover:text-[var(--bg-main)] opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100 bg-transparent cursor-pointer"
                                     >
                                         Get Started <ArrowDown className="w-4 h-4 -rotate-90" />
                                     </button>
@@ -285,11 +502,11 @@ export function PublicWebsite() {
             </section>
 
             {/* ===== ABOUT SECTION (Modern Split) ===== */}
-            <section id="about" className="py-24 md:py-32 px-6 bg-slate-50 relative overflow-hidden">
+            <section id="about" className="py-24 md:py-32 px-6 bg-[var(--bg-alt)] relative overflow-hidden">
                 {/* Decorative Background Text */}
                 <div className="absolute top-20 left-0 opacity-[0.03] pointer-events-none select-none overflow-hidden w-full">
                     <span
-                        className="text-[12rem] md:text-[20rem] font-bold text-slate-900 leading-none -ml-20"
+                        className="text-[12rem] md:text-[20rem] font-bold text-[var(--text-main)] leading-none -ml-20"
                         style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                         About
@@ -308,11 +525,11 @@ export function PublicWebsite() {
                         >
                             {/* Headshot Card */}
                             <div className="relative mb-8 group perspective-1000 max-w-xs mx-auto md:max-w-none">
-                                <div className="absolute -inset-3 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-[2rem] -rotate-2 group-hover:rotate-0 transition-transform duration-500"></div>
-                                <div className="relative rounded-[1.5rem] overflow-hidden shadow-2xl aspect-[3/4] bg-white">
+                                <div className="absolute -inset-3 bg-gradient-to-tr from-secondary/20 to-transparent rounded-[2rem] -rotate-2 group-hover:rotate-0 transition-transform duration-500"></div>
+                                <div className="relative rounded-[1.5rem] overflow-hidden shadow-2xl aspect-[3/4] bg-[var(--bg-main)]">
                                     {agent.headshot_url ? (
                                         <img
-                                            src={agent.headshot_url}
+                                            src={localConfig.headshotUrl || agent.headshot_url}
                                             alt={agent.full_name}
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                         />
@@ -325,65 +542,65 @@ export function PublicWebsite() {
                             </div>
 
                             {/* Extended Info Card */}
-                            <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-100 space-y-5">
+                            <div className="bg-[var(--bg-main)]/95 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-[var(--bg-alt)] space-y-5">
                                 <div className="flex items-start gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
-                                        <Phone className="w-5 h-5 text-amber-600" />
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        <Phone className="w-5 h-5 text-primary" />
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-0.5">Mobile</p>
-                                        <a href={`tel:${agent.primary_phone}`} className="font-medium text-slate-900 hover:text-amber-600 transition-colors">
-                                            {agent.primary_phone || '—'}
+                                        <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">Mobile</p>
+                                        <a href={`tel:${localConfig.contactPhone || agent.primary_phone}`} className="font-medium text-[var(--text-main)] hover:text-primary transition-colors">
+                                            {localConfig.contactPhone || agent.primary_phone || '—'}
                                         </a>
                                     </div>
                                 </div>
 
 
 
-                                {agent.office_phone && agent.office_phone !== '(200) 000-0000' && (
-                                    <div className="flex items-start gap-4 pt-4 border-t border-slate-100">
-                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center flex-shrink-0">
-                                            <Building className="w-5 h-5 text-slate-500" />
+                                {(localConfig.officePhone || (agent.office_phone && agent.office_phone !== '(200) 000-0000')) && (
+                                    <div className="flex items-start gap-4 pt-4 border-t border-[var(--bg-alt)]">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                            <Building className="w-5 h-5 text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-0.5">Office</p>
-                                            <p className="font-medium text-slate-900">{agent.office_phone}</p>
+                                            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">Office</p>
+                                            <p className="font-medium text-[var(--text-main)]">{localConfig.officePhone || agent.office_phone}</p>
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="flex items-start gap-4 pt-4 border-t border-slate-100">
-                                    <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
-                                        <Mail className="w-5 h-5 text-amber-600" />
+                                <div className="flex items-start gap-4 pt-4 border-t border-[var(--bg-alt)]">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        <Mail className="w-5 h-5 text-primary" />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-0.5">Email</p>
-                                        <a href={`mailto:${agent.primary_email}`} className="font-medium text-slate-900 hover:text-amber-600 transition-colors break-all block">
-                                            {agent.primary_email || '—'}
+                                        <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">Email</p>
+                                        <a href={`mailto:${localConfig.contactEmail || agent.primary_email}`} className="font-medium text-[var(--text-main)] hover:text-primary transition-colors break-all block">
+                                            {localConfig.contactEmail || agent.primary_email || '—'}
                                         </a>
                                     </div>
                                 </div>
 
-                                {agent.license_number && (
-                                    <div className="flex items-start gap-4 pt-4 border-t border-slate-100">
-                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center flex-shrink-0">
-                                            <BadgeCheck className="w-5 h-5 text-slate-500" />
+                                {(localConfig.licenseNumber || agent.license_number) && (
+                                    <div className="flex items-start gap-4 pt-4 border-t border-[var(--bg-alt)]">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                            <BadgeCheck className="w-5 h-5 text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-0.5">License #</p>
-                                            <p className="font-medium text-slate-900">{agent.license_number}</p>
+                                            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">License #</p>
+                                            <p className="font-medium text-[var(--text-main)]">{localConfig.licenseNumber || agent.license_number}</p>
                                         </div>
                                     </div>
                                 )}
 
                                 {agent.office_address && (
-                                    <div className="flex items-start gap-4 pt-4 border-t border-slate-100">
-                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center flex-shrink-0">
-                                            <MapPin className="w-5 h-5 text-slate-500" />
+                                    <div className="flex items-start gap-4 pt-4 border-t border-[var(--bg-alt)]">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                            <MapPin className="w-5 h-5 text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-0.5">Office Address</p>
-                                            <p className="font-medium text-slate-900 text-sm leading-snug">{agent.office_address}</p>
+                                            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">Office Address</p>
+                                            <p className="font-medium text-[var(--text-main)] text-sm leading-snug">{agent.office_address}</p>
                                         </div>
                                     </div>
                                 )}
@@ -399,40 +616,69 @@ export function PublicWebsite() {
                             className="md:col-span-7 lg:col-span-8"
                         >
                             <div className="mb-10">
-                                <span className="text-amber-600 font-bold tracking-[0.2em] text-sm uppercase flex items-center gap-3 mb-4">
-                                    <span className="w-10 h-[1px] bg-amber-600"></span>
-                                    About {agent.full_name.split(' ')[0]}
+                                <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase flex items-center gap-3 mb-4">
+                                    <span className="w-10 h-[1px] bg-primary"></span>
+                                    <EditableText
+                                        value={localConfig.aboutKicker || `About ${agent.full_name.split(' ')[0]}`}
+                                        isEditing={isEditing}
+                                        onChange={(val) => updateConfig('aboutKicker', val)}
+                                    />
                                 </span>
                                 <h2
-                                    className="text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 leading-[0.9]"
+                                    className="text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--text-main)] leading-[0.9]"
                                     style={{ fontFamily: "'Playfair Display', serif" }}
                                 >
-                                    Real estate<br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-700 to-amber-500">redefined.</span>
+                                    <EditableText
+                                        value={localConfig.bioHeadlinePrefix || "Real estate"}
+                                        isEditing={isEditing}
+                                        onChange={(val) => updateConfig('bioHeadlinePrefix', val)}
+                                    />
+                                    <br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                                        <EditableText
+                                            value={localConfig.bioHeadline || "redefined."}
+                                            isEditing={isEditing}
+                                            onChange={(val) => updateConfig('bioHeadline', val)}
+                                        />
+                                    </span>
                                 </h2>
                             </div>
 
-                            <div className="prose prose-lg prose-slate text-slate-600 leading-relaxed text-lg max-w-none">
-                                {agent.bio && !agent.bio.toLowerCase().trim().startsWith('yes, i would like more information from coldwell banker') ? (
-                                    agent.bio.split('\n').map((paragraph, idx) => (
-                                        paragraph.trim().length > 0 && (
-                                            <p key={idx} className="mb-6 text-slate-600">
-                                                {paragraph}
-                                            </p>
-                                        )
-                                    ))
-                                ) : (
-                                    <p className="text-slate-400 italic">No biography available.</p>
-                                )}
+                            <div className="prose prose-lg max-w-none text-[var(--text-muted)] prose-headings:text-[var(--text-main)] prose-strong:text-[var(--text-main)] prose-p:text-[var(--text-muted)]">
+                                <EditableText
+                                    value={localConfig.customBio || agent.bio || ""}
+                                    isEditing={isEditing}
+                                    onChange={(val) => updateConfig('customBio', val)}
+                                    multiline
+                                />
                             </div>
 
-                            <div className="mt-12 pt-8 border-t border-slate-200 grid grid-cols-2 gap-8">
+                            <div className="mt-12 pt-8 border-t border-[var(--bg-alt)] grid grid-cols-2 gap-8">
                                 <div>
-                                    <p className="text-slate-900 font-bold text-lg mb-1">{agent.brokerage}</p>
-                                    <p className="text-slate-500 text-sm">Brokerage</p>
+                                    <p className="text-[var(--text-main)] font-bold text-lg mb-1">{agent.brokerage}</p>
+                                    <p className="text-[var(--text-muted)] text-sm">
+                                        <EditableText
+                                            value={localConfig.aboutBrokerageLabel || "Brokerage"}
+                                            isEditing={isEditing}
+                                            onChange={val => updateConfig('aboutBrokerageLabel', val)}
+                                        />
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-900 font-bold text-lg mb-1">Local Expert</p>
-                                    <p className="text-slate-500 text-sm">Specialization</p>
+                                    <p className="text-[var(--text-main)] font-bold text-lg mb-1">
+                                        <EditableText
+                                            value={localConfig.aboutExpertTitle || "Local Expert"}
+                                            isEditing={isEditing}
+                                            onChange={val => updateConfig('aboutExpertTitle', val)}
+                                        />
+                                    </p>
+                                    <p className="text-[var(--text-muted)] text-sm">
+                                        <EditableText
+                                            value={localConfig.aboutSpecializationLabel || "Specialization"}
+                                            isEditing={isEditing}
+                                            onChange={val => updateConfig('aboutSpecializationLabel', val)}
+                                        />
+                                    </p>
                                 </div>
                             </div>
                         </motion.div>
@@ -441,7 +687,7 @@ export function PublicWebsite() {
             </section>
 
             {/* ===== TESTIMONIALS SECTION ===== */}
-            <section className="py-32 px-6 bg-slate-50 relative overflow-hidden">
+            <section className="py-32 px-6 bg-[var(--bg-alt)] relative overflow-hidden">
                 <div className="max-w-5xl mx-auto relative z-10">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
@@ -449,9 +695,9 @@ export function PublicWebsite() {
                         viewport={{ once: true }}
                         className="text-center mb-16"
                     >
-                        <span className="text-sm uppercase tracking-[0.3em] text-amber-700 font-semibold">Testimonials</span>
+                        <span className="text-sm uppercase tracking-[0.3em] text-primary font-semibold">Testimonials</span>
                         <h2
-                            className="text-4xl md:text-5xl font-bold text-slate-900 mt-4"
+                            className="text-4xl md:text-5xl font-bold text-[var(--text-main)] mt-4"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                             Client Stories
@@ -460,68 +706,114 @@ export function PublicWebsite() {
 
                     {/* Scrolling Marquee Container */}
                     <div className="relative w-full overflow-hidden mask-linear-fade">
+                        {/* Edit Mode Controls */}
+                        {isEditing && (
+                            <div className="absolute top-4 right-4 z-50">
+                                <button
+                                    onClick={addTestimonial}
+                                    className="px-4 py-2 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 transition flex items-center gap-2 font-medium"
+                                >
+                                    <span className="text-xl">+</span> Add Testimonial
+                                </button>
+                            </div>
+                        )}
+
                         {/* Left/Right Fade Masks */}
-                        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none" />
-                        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none" />
+                        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[var(--bg-alt)] to-transparent z-10 pointer-events-none" />
+                        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[var(--bg-alt)] to-transparent z-10 pointer-events-none" />
 
                         <motion.div
                             className="flex gap-8 w-max"
-                            animate={{ x: "-50%" }}
+                            animate={isEditing ? { x: 0 } : { x: "-50%" }} // PAUSE animation when editing
                             transition={{
-                                duration: 40,
-                                repeat: Infinity,
+                                duration: isEditing ? 0 : 40,
+                                repeat: isEditing ? 0 : Infinity,
                                 ease: "linear",
                                 repeatType: "loop"
                             }}
+                            style={{ x: isEditing ? 0 : undefined }} // Force stop
                         >
-                            {/* Duplicate items for seamless loop */}
-                            {[...[
-                                { quote: `${agent.full_name.split(' ')[0]} was incredible to work with. The attention to detail and market knowledge made selling our home effortless.`, name: "James Peterson", location: "Dallas, TX", initials: "JP" },
-                                { quote: `We found our dream home thanks to ${agent.full_name}'s persistence and dedication. Highly recommended!`, name: "Sarah Mitchell", location: "Frisco, TX", initials: "SM" },
-                                { quote: "Professional, knowledgeable, and always available. The best real estate experience we've ever had.", name: "Michael Chen", location: "Plano, TX", initials: "MC" },
-                                { quote: "Truly went above and beyond to ensure we got the best deal possible.", name: "Emily Rodriguez", location: "Fort Worth, TX", initials: "ER" }
-                            ], ...[
-                                { quote: `${agent.full_name.split(' ')[0]} was incredible to work with. The attention to detail and market knowledge made selling our home effortless.`, name: "James Peterson", location: "Dallas, TX", initials: "JP" },
-                                { quote: `We found our dream home thanks to ${agent.full_name}'s persistence and dedication. Highly recommended!`, name: "Sarah Mitchell", location: "Frisco, TX", initials: "SM" },
-                                { quote: "Professional, knowledgeable, and always available. The best real estate experience we've ever had.", name: "Michael Chen", location: "Plano, TX", initials: "MC" },
-                                { quote: "Truly went above and beyond to ensure we got the best deal possible.", name: "Emily Rodriguez", location: "Fort Worth, TX", initials: "ER" }
-                            ]].map((testimonial, i) => (
-                                <motion.div
-                                    key={i}
-                                    whileHover={{ scale: 1.02, y: -5 }}
-                                    className="w-[400px] p-8 bg-white rounded-3xl shadow-sm border border-slate-100 flex-shrink-0 relative group hover:shadow-xl transition-all duration-300"
-                                >
-                                    <span
-                                        className="absolute top-6 left-6 text-6xl text-amber-500/10 font-serif leading-none group-hover:text-amber-500/20 transition-colors"
-                                        style={{ fontFamily: "'Playfair Display', serif" }}
+                            {/* Duplicate items for seamless loop (or just single list if editing/short) */}
+                            {((): any[] => {
+                                const list = localConfig.testimonials || [];
+                                // If editing or list is short, maybe don't duplicate? But for visual consistency we should.
+                                // However, editing duplicates is confusing.
+                                // If editing, let's SHOW ONLY THE REAL LIST?
+                                // If I show only real list, the layout shifts.
+                                // Compromise: If isEditing, show only REAL list and allow horizontal scroll if needed.
+                                return isEditing ? list : [...list, ...list];
+                            })().map((testimonial, i) => {
+                                // If duplicates are rendered, the second half indices (i >= length) map to i % length
+                                const realIndex = i % (localConfig.testimonials?.length || 1);
+                                const isDuplicate = isEditing ? false : i >= (localConfig.testimonials?.length || 1);
+
+                                // Don't allow editing duplicates (it's confusing)
+                                const canEditThis = isEditing && !isDuplicate;
+
+                                return (
+                                    <motion.div
+                                        key={i}
+                                        whileHover={{ scale: 1.02, y: -5 }}
+                                        className="w-[400px] p-8 bg-[var(--bg-main)] rounded-3xl shadow-sm border border-[var(--bg-alt)] flex-shrink-0 relative group hover:shadow-xl transition-all duration-300"
                                     >
-                                        "
-                                    </span>
-                                    <p className="text-slate-600 leading-relaxed mb-6 relative z-10 pt-6 italic">
-                                        {testimonial.quote}
-                                    </p>
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-sm group-hover:bg-amber-100 group-hover:text-amber-700 transition-colors">
-                                            {testimonial.initials}
+                                        {canEditThis && (
+                                            <button
+                                                onClick={() => removeTestimonial(realIndex)}
+                                                className="absolute top-4 right-4 p-2 bg-red-500/10 text-red-500 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all z-50"
+                                            >
+                                                <Minus className="w-4 h-4" />
+                                            </button>
+                                        )}
+
+                                        <span
+                                            className="absolute top-6 left-6 text-6xl text-primary/10 font-serif leading-none group-hover:text-primary/20 transition-colors"
+                                            style={{ fontFamily: "'Playfair Display', serif" }}
+                                        >
+                                            "
+                                        </span>
+                                        <div className="text-[var(--text-muted)] leading-relaxed mb-6 relative z-10 pt-6 italic">
+                                            <EditableText
+                                                value={testimonial.quote}
+                                                isEditing={canEditThis}
+                                                onChange={(val) => handleTestimonialChange(realIndex, 'quote', val)}
+                                                multiline
+                                            />
                                         </div>
-                                        <div>
-                                            <p className="font-semibold text-slate-900">{testimonial.name}</p>
-                                            <p className="text-sm text-slate-500">{testimonial.location}</p>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-full bg-[var(--bg-alt)] flex items-center justify-center font-bold text-[var(--text-muted)] text-sm group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                                                {testimonial.initials || '??'}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-[var(--text-main)]">
+                                                    <EditableText
+                                                        value={testimonial.name}
+                                                        isEditing={canEditThis}
+                                                        onChange={(val) => handleTestimonialChange(realIndex, 'name', val)}
+                                                    />
+                                                </p>
+                                                <p className="text-sm text-[var(--text-muted)]">
+                                                    <EditableText
+                                                        value={testimonial.location}
+                                                        isEditing={canEditThis}
+                                                        onChange={(val) => handleTestimonialChange(realIndex, 'location', val)}
+                                                    />
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </motion.div>
-                            ))}
+                                    </motion.div>
+                                )
+                            })}
                         </motion.div>
                     </div>
                 </div>
             </section>
 
-            {/* ===== CONTACT SECTION - REDESIGNED (Light Theme) ===== */}
-            <section id="contact" className="py-24 px-6 bg-white relative overflow-hidden">
+            {/* ===== CONTACT SECTION - REDESIGNED (Dynamic Theme) ===== */}
+            <section id="contact" className="py-24 px-6 bg-[var(--bg-main)] relative overflow-hidden">
                 {/* Decorative Background Text */}
                 <div className="absolute top-20 right-0 opacity-[0.03] pointer-events-none select-none overflow-hidden w-full text-right">
                     <span
-                        className="text-[12rem] md:text-[20rem] font-bold text-slate-900 leading-none -mr-20"
+                        className="text-[12rem] md:text-[20rem] font-bold text-[var(--text-main)] leading-none -mr-20"
                         style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                         Contact
@@ -535,12 +827,22 @@ export function PublicWebsite() {
                         viewport={{ once: true }}
                         className="text-center mb-16"
                     >
-                        <span className="text-sm uppercase tracking-[0.3em] text-amber-700 font-semibold">Ready to Connect?</span>
+                        <span className="text-sm uppercase tracking-[0.3em] text-primary font-semibold">
+                            <EditableText
+                                value={localConfig.contactKicker || "Ready to Connect?"}
+                                isEditing={isEditing}
+                                onChange={val => updateConfig('contactKicker', val)}
+                            />
+                        </span>
                         <h2
-                            className="text-5xl md:text-6xl font-bold text-slate-900 mt-4"
+                            className="text-5xl md:text-6xl font-bold text-[var(--text-main)] mt-4"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
-                            Let's Talk
+                            <EditableText
+                                value={localConfig.contactTitle || "Let's Talk"}
+                                isEditing={isEditing}
+                                onChange={val => updateConfig('contactTitle', val)}
+                            />
                         </h2>
                     </motion.div>
 
@@ -577,45 +879,45 @@ export function PublicWebsite() {
                                     scrolling="no"
                                     marginHeight={0}
                                     marginWidth={0}
-                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(agent.office_address || `${agent.city}, ${agent.state}`)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(localConfig.contactAddress || agent.office_address || `${agent.city}, ${agent.state}`)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                                     className="opacity-90 group-hover:opacity-100 transition-opacity duration-500"
                                 />
                             </div>
 
                             {/* Contact Info Cards */}
                             <div className="grid sm:grid-cols-2 gap-4">
-                                <a href={`mailto:${agent.primary_email}`} className="group p-6 bg-slate-50 hover:bg-white hover:shadow-md rounded-2xl border border-slate-100 transition-all">
+                                <a href={`mailto:${localConfig.contactEmail || agent.primary_email}`} className="group p-6 bg-[var(--bg-alt)] hover:bg-[var(--bg-main)] hover:shadow-md rounded-2xl border border-[var(--bg-alt)] transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                                             <Mail className="w-5 h-5" />
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Email</p>
-                                            <p className="text-slate-900 font-medium truncate">{agent.primary_email || '—'}</p>
+                                            <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest font-bold">Email</p>
+                                            <p className="text-[var(--text-main)] font-medium truncate">{localConfig.contactEmail || agent.primary_email || '—'}</p>
                                         </div>
                                     </div>
                                 </a>
 
-                                <a href={`tel:${agent.primary_phone}`} className="group p-6 bg-slate-50 hover:bg-white hover:shadow-md rounded-2xl border border-slate-100 transition-all">
+                                <a href={`tel:${localConfig.contactPhone || agent.primary_phone}`} className="group p-6 bg-[var(--bg-alt)] hover:bg-[var(--bg-main)] hover:shadow-md rounded-2xl border border-[var(--bg-alt)] transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                                             <Phone className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Phone</p>
-                                            <p className="text-slate-900 font-medium">{agent.primary_phone || '—'}</p>
+                                            <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest font-bold">Phone</p>
+                                            <p className="text-[var(--text-main)] font-medium">{localConfig.contactPhone || agent.primary_phone || '—'}</p>
                                         </div>
                                     </div>
                                 </a>
 
-                                <div className="group p-6 bg-slate-50 hover:bg-white hover:shadow-md rounded-2xl border border-slate-100 sm:col-span-2 transition-all">
+                                <div className="group p-6 bg-[var(--bg-alt)] hover:bg-[var(--bg-main)] hover:shadow-md rounded-2xl border border-[var(--bg-alt)] sm:col-span-2 transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                                             <MapPin className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Office</p>
-                                            <p className="text-slate-900 font-medium">{agent.office_address || `${agent.city}, ${agent.state}`}</p>
+                                            <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest font-bold">Office</p>
+                                            <p className="text-[var(--text-main)] font-medium">{localConfig.contactAddress || agent.office_address || `${agent.city}, ${agent.state}`}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -623,19 +925,29 @@ export function PublicWebsite() {
 
                             {/* Social Links */}
                             <div className="flex gap-4 pt-4">
-                                {agent.linkedin_url && (
-                                    <a href={agent.linkedin_url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-amber-600 hover:text-white shadow-sm hover:shadow-md transition-all border border-slate-100">
+                                {(localConfig.linkedinUrl || agent.linkedin_url) && (
+                                    <a href={localConfig.linkedinUrl || agent.linkedin_url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white shadow-sm hover:shadow-md transition-all border border-slate-100">
                                         <Linkedin className="w-5 h-5" />
                                     </a>
                                 )}
-                                {agent.facebook_url && (
-                                    <a href={agent.facebook_url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-amber-600 hover:text-white shadow-sm hover:shadow-md transition-all border border-slate-100">
+                                {(localConfig.facebookUrl || agent.facebook_url) && (
+                                    <a href={localConfig.facebookUrl || agent.facebook_url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white shadow-sm hover:shadow-md transition-all border border-slate-100">
                                         <Facebook className="w-5 h-5" />
                                     </a>
                                 )}
-                                {agent.instagram_url && (
-                                    <a href={agent.instagram_url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-amber-600 hover:text-white shadow-sm hover:shadow-md transition-all border border-slate-100">
+                                {(localConfig.instagramUrl || agent.instagram_url) && (
+                                    <a href={localConfig.instagramUrl || agent.instagram_url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white shadow-sm hover:shadow-md transition-all border border-slate-100">
                                         <Instagram className="w-5 h-5" />
+                                    </a>
+                                )}
+                                {(localConfig.twitterUrl || agent.twitter_url) && (
+                                    <a href={localConfig.twitterUrl || agent.twitter_url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white shadow-sm hover:shadow-md transition-all border border-slate-100">
+                                        <Twitter className="w-5 h-5" />
+                                    </a>
+                                )}
+                                {(localConfig.youtubeUrl || agent.youtube_url) && (
+                                    <a href={localConfig.youtubeUrl || agent.youtube_url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white shadow-sm hover:shadow-md transition-all border border-slate-100">
+                                        <Youtube className="w-5 h-5" />
                                     </a>
                                 )}
                             </div>
@@ -654,36 +966,41 @@ export function PublicWebsite() {
                                 {agent.full_name}
                             </h3>
                             {agent.license_number && (
-                                <p className="text-slate-500 text-sm font-medium border-l-2 border-amber-700 pl-3">
+                                <p className="text-slate-500 text-sm font-medium border-l-2 border-primary pl-3">
                                     License #: {agent.license_number}
                                 </p>
                             )}
                             <p className="leading-relaxed">
-                                {agent.bio ? agent.bio.slice(0, 150) + (agent.bio.length > 150 ? '...' : '') : 'Dedicated to providing exceptional real estate services tailored to your unique needs.'}
+                                <EditableText
+                                    value={localConfig.footerBio || (agent.bio ? agent.bio.slice(0, 150) + (agent.bio.length > 150 ? '...' : '') : 'Dedicated to providing exceptional real estate services tailored to your unique needs.')}
+                                    isEditing={isEditing}
+                                    onChange={val => updateConfig('footerBio', val)}
+                                    multiline
+                                />
                             </p>
                             <div className="flex gap-4 pt-2">
                                 {agent.linkedin_url && (
-                                    <a href={agent.linkedin_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-amber-600 transition-colors border border-slate-800">
+                                    <a href={agent.linkedin_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Linkedin className="w-4 h-4" />
                                     </a>
                                 )}
                                 {agent.facebook_url && (
-                                    <a href={agent.facebook_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-amber-600 transition-colors border border-slate-800">
+                                    <a href={agent.facebook_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Facebook className="w-4 h-4" />
                                     </a>
                                 )}
                                 {agent.instagram_url && (
-                                    <a href={agent.instagram_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-amber-600 transition-colors border border-slate-800">
+                                    <a href={agent.instagram_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Instagram className="w-4 h-4" />
                                     </a>
                                 )}
                                 {agent.twitter_url && (
-                                    <a href={agent.twitter_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-amber-600 transition-colors border border-slate-800">
+                                    <a href={agent.twitter_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Twitter className="w-4 h-4" />
                                     </a>
                                 )}
                                 {agent.youtube_url && (
-                                    <a href={agent.youtube_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-amber-600 transition-colors border border-slate-800">
+                                    <a href={agent.youtube_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Youtube className="w-4 h-4" />
                                     </a>
                                 )}
@@ -692,44 +1009,73 @@ export function PublicWebsite() {
 
                         {/* Navigation */}
                         <div>
-                            <h4 className="text-white font-bold uppercase tracking-wider mb-6">Explore</h4>
+                            <h4 className="text-white font-bold uppercase tracking-wider mb-6">
+                                <EditableText
+                                    value={localConfig.footerExploreTitle || "Explore"}
+                                    isEditing={isEditing}
+                                    onChange={val => updateConfig('footerExploreTitle', val)}
+                                />
+                            </h4>
                             <ul className="space-y-3">
-                                <li><a href="#hero" className="hover:text-amber-500 transition-colors">Home</a></li>
-                                <li><a href="#about" className="hover:text-amber-500 transition-colors">About</a></li>
-                                <li><a href="#services" className="hover:text-amber-500 transition-colors">Services</a></li>
-                                <li><a href="#contact" className="hover:text-amber-500 transition-colors">Contact</a></li>
+                                <li><a href="#hero" className="hover:text-primary transition-colors">Home</a></li>
+                                <li><a href="#about" className="hover:text-primary transition-colors">About</a></li>
+                                <li><a href="#services" className="hover:text-primary transition-colors">Services</a></li>
+                                <li><a href="#contact" className="hover:text-primary transition-colors">Contact</a></li>
                             </ul>
                         </div>
 
                         {/* Contact */}
                         <div>
-                            <h4 className="text-white font-bold uppercase tracking-wider mb-6">Visit Us</h4>
+                            <h4 className="text-white font-bold uppercase tracking-wider mb-6">
+                                <EditableText
+                                    value={localConfig.footerVisitTitle || "Visit Us"}
+                                    isEditing={isEditing}
+                                    onChange={val => updateConfig('footerVisitTitle', val)}
+                                />
+                            </h4>
                             <ul className="space-y-4">
                                 <li className="flex items-start gap-3">
-                                    <MapPin className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                                     <span>{agent.office_address || `${agent.city}, ${agent.state}`}</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <Phone className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                                    <a href={`tel:${agent.primary_phone}`} className="hover:text-amber-500 transition-colors">{agent.primary_phone}</a>
+                                    <Phone className="w-5 h-5 text-primary flex-shrink-0" />
+                                    <a href={`tel:${agent.primary_phone}`} className="hover:text-primary transition-colors">{agent.primary_phone}</a>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <Mail className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                                    <a href={`mailto:${agent.primary_email}`} className="hover:text-amber-500 transition-colors truncate">{agent.primary_email}</a>
+                                    <Mail className="w-5 h-5 text-primary flex-shrink-0" />
+                                    <a href={`mailto:${agent.primary_email}`} className="hover:text-primary transition-colors truncate">{agent.primary_email}</a>
                                 </li>
                             </ul>
                         </div>
 
-                        {/* Brokerage */}
+                        {/* Branding Column */}
                         <div>
-                            <h4 className="text-white font-bold uppercase tracking-wider mb-6">Brokerage</h4>
+                            <h4 className="text-white font-bold uppercase tracking-wider mb-6">Brokerage & Team</h4>
+
+                            {/* Team Logo */}
+                            {(localConfig.logoUrl || agent.logo_url) && (
+                                <div className="mb-6">
+                                    <div className="bg-white p-4 rounded-xl inline-block">
+                                        <img
+                                            src={localConfig.logoUrl || agent.logo_url}
+                                            alt={agent.full_name}
+                                            className="h-16 md:h-20 object-contain"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-2 font-medium">Team / Agent</p>
+                                </div>
+                            )}
+
+                            {/* Brokerage Logo */}
                             {agent.brokerage_logo_url ? (
-                                <div className="bg-white p-4 rounded-xl inline-block mb-6">
-                                    <img src={agent.brokerage_logo_url} alt={agent.brokerage} className="h-16 md:h-20 object-contain" />
+                                <div className="bg-white p-4 rounded-xl inline-block mb-3">
+                                    <img src={agent.brokerage_logo_url} alt={agent.brokerage} className="h-12 md:h-14 object-contain" />
                                 </div>
                             ) : (
                                 <div className="text-2xl font-bold text-white mb-6">{agent.brokerage}</div>
                             )}
+
                             <p className="text-sm mb-4 font-medium text-slate-300">{agent.office_name}</p>
                             <div className="space-y-2 text-sm">
                                 <p className="text-slate-500">&copy; {new Date().getFullYear()} {agent.full_name}.</p>
