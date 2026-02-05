@@ -81,8 +81,9 @@ export const vercelService = {
 
     removeDomain: async (domain: string) => {
         console.log(`[Vercel] Removing domain: ${domain}`);
-        // DELETE /v9/projects/:idOrName/domains/:domain
-        const response = await fetch(getUrl(`/v9/projects/${PROJECT_ID}/domains/${domain}`), {
+        // DELETE /v10/projects/:idOrName/domains/:domain
+        // Note: Docs say v9, but v10 is consistent. If fails, we revert.
+        const response = await fetch(getUrl(`/v10/projects/${PROJECT_ID}/domains/${domain}`), {
             method: 'DELETE',
             headers,
         });

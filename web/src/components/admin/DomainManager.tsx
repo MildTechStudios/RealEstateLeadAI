@@ -171,7 +171,17 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
         loadConfig()
     }, [agentId, initialDomain, token])
 
-    if (!status && !domain) {
+    // Fix: render based on status presence, not domain input value
+    if (!status) {
+        // If we have an initial domain but no status yet, we are probably loading checkStatus
+        if (initialDomain && verifying) {
+            return (
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
+                </div>
+            )
+        }
+
         return (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -200,7 +210,13 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                         {loading ? 'Adding...' : 'Connect'}
                     </button>
                 </form>
-                {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+                {error && (
+                    <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                        <p className="text-red-400 text-xs font-mono break-all">
+                            {typeof error === 'object' ? JSON.stringify(error) : error}
+                        </p>
+                    </div>
+                )}
             </div>
         )
     }
@@ -341,7 +357,13 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                 </button>
             </div>
 
-            {error && <p className="text-red-400 text-xs mt-4 text-center">{error}</p>}
+            {error && (
+                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
+                    <p className="text-red-400 text-xs font-mono break-all inline-block text-left">
+                        {typeof error === 'object' ? JSON.stringify(error) : error}
+                    </p>
+                </div>
+            )}
         </div>
     )
 }
