@@ -52,9 +52,19 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
             setError(err.message)
 
             // If the error contains verification info (ownership conflict), show it!
-            if (err.details && (err.details.code === 'existing_project_domain' || err.details.verification)) {
-                const verification = err.details.verification;
-                // Normalize verification to array
+            const errorCode = err.details?.code || err.details?.error?.code;
+            const verification = err.details?.verification || err.details?.error?.verification;
+
+            // If the error contains verification info (ownership conflict) or is existing domain
+            if (errorCode === 'existing_project_domain' || verification) {
+
+                // If it already exists, just fetch the status to "adopt" it
+                if (errorCode === 'existing_project_domain') {
+                    console.log('Domain already exists, fetching status...');
+                    await checkStatus(domain);
+                    return; // checkStatus will update state
+                }
+
                 const verificationList = Array.isArray(verification)
                     ? verification
                     : (verification ? [verification] : []);
@@ -103,9 +113,11 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
             }
 
             // If the error contains verification info (ownership conflict), show it!
-            if (err.details && (err.details.code === 'existing_project_domain' || err.details.verification)) {
+            const errorCode = err.details?.code || err.details?.error?.code;
+            const verification = err.details?.verification || err.details?.error?.verification;
 
-                const verification = err.details.verification;
+            if (errorCode === 'existing_project_domain' || verification) {
+
                 const verificationList = Array.isArray(verification)
                     ? verification
                     : (verification ? [verification] : []);
