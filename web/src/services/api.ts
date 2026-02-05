@@ -47,7 +47,7 @@ export function isValidCBUrl(url: string): boolean {
 /**
  * Helper to get Auth Headers
  */
-const getAuthHeaders = () => {
+const getAuthHeaders = (): Record<string, string> => {
     // Get the session from local storage (Supabase default)
     // We scan for the key that starts with 'sb-' and ends with '-auth-token'
     const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
@@ -68,12 +68,14 @@ const getAuthHeaders = () => {
  * Extract an agent profile from a CB URL
  */
 export async function extractProfile(url: string): Promise<CBAgentProfile> {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    }
+
     const response = await fetch(`${API_BASE}/api/extract`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
+        headers,
         body: JSON.stringify({ url })
     })
 
@@ -128,12 +130,14 @@ export async function updateLeadConfig(
     id: string,
     config: { website_slug?: string; website_published?: boolean }
 ): Promise<void> {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    }
+
     const response = await fetch(`${API_BASE}/api/leads/${id}/config`, {
         method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
+        headers,
         body: JSON.stringify(config)
     })
 
@@ -163,12 +167,14 @@ export async function updateLead(
     id: string,
     data: Partial<Omit<DBProfile, 'id' | 'created_at' | 'updated_at' | 'source_url'>>
 ): Promise<void> {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+    }
+
     const response = await fetch(`${API_BASE}/api/leads/${id}`, {
         method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders()
-        },
+        headers,
         body: JSON.stringify(data)
     })
 

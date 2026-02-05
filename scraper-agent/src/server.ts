@@ -97,9 +97,11 @@ import { deleteLead, updateLeadConfig, getLeadBySlug } from './services/db';
 app.delete('/api/leads/:id', verifySupabaseUser, async (req, res) => {
     try {
         const { id } = req.params;
-        console.log(`[API] Deleting lead: ${id}`);
+        const leadId = Array.isArray(id) ? id[0] : id; // Handle potential array from params
 
-        const result = await deleteLead(id);
+        console.log(`[API] Deleting lead: ${leadId}`);
+
+        const result = await deleteLead(leadId);
 
         if (!result.success) {
             return res.status(500).json({ error: result.error });
@@ -116,10 +118,12 @@ app.delete('/api/leads/:id', verifySupabaseUser, async (req, res) => {
 app.patch('/api/leads/:id/config', verifySupabaseUser, async (req, res) => {
     try {
         const { id } = req.params;
-        const { website_slug, website_published } = req.body;
-        console.log(`[API] Updating lead config: ${id}`, { website_slug, website_published });
+        const leadId = Array.isArray(id) ? id[0] : id;
 
-        const result = await updateLeadConfig(id, { website_slug, website_published });
+        const { website_slug, website_published } = req.body;
+        console.log(`[API] Updating lead config: ${leadId}`, { website_slug, website_published });
+
+        const result = await updateLeadConfig(leadId, { website_slug, website_published });
 
         if (!result.success) {
             return res.status(500).json({ error: result.error });
@@ -136,9 +140,11 @@ app.patch('/api/leads/:id/config', verifySupabaseUser, async (req, res) => {
 app.get('/api/website/:slug', async (req, res) => {
     try {
         const { slug } = req.params;
-        console.log(`[API] Fetching website: ${slug}`);
+        const slugValue = Array.isArray(slug) ? slug[0] : slug;
 
-        const result = await getLeadBySlug(slug);
+        console.log(`[API] Fetching website: ${slugValue}`);
+
+        const result = await getLeadBySlug(slugValue);
 
         if (!result.success || !result.data) {
             return res.status(404).json({ error: 'Website not found' });
@@ -160,11 +166,13 @@ import { updateLead } from './services/db';
 app.patch('/api/leads/:id', verifySupabaseUser, async (req, res) => {
     try {
         const { id } = req.params;
+        const leadId = Array.isArray(id) ? id[0] : id;
+
         const updateData = req.body;
 
-        console.log(`[API] Updating lead profile: ${id}`);
+        console.log(`[API] Updating lead profile: ${leadId}`);
 
-        const result = await updateLead(id, updateData);
+        const result = await updateLead(leadId, updateData);
 
         if (!result.success) {
             return res.status(400).json({ error: result.error });
