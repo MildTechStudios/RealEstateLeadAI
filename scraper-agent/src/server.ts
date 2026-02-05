@@ -27,6 +27,13 @@ app.use('/api/admin', adminRoutes);
 import { publicRoutes } from './routes/public';
 app.use('/api/public', publicRoutes);
 
+import agentRoutes from './routes/agent';
+app.use('/api/agent', agentRoutes);
+import { seedDefaultPasswords } from './services/auth';
+
+// Run seeding on startup
+seedDefaultPasswords().catch(err => console.error('[Server] Seeding failed:', err));
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

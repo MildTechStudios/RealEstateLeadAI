@@ -8,6 +8,7 @@ export function AdminDashboard() {
     const { slug } = useParams()
     const navigate = useNavigate()
     const [agent, setAgent] = useState<DBProfile | null>(null)
+    const [activeTab, setActiveTab] = useState<'overview' | 'settings'>('overview')
 
     // Auth & Data Fetch
     useEffect(() => {
@@ -71,7 +72,10 @@ export function AdminDashboard() {
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 bg-teal-500/10 text-teal-400 rounded-xl font-medium transition-colors">
+                    <button
+                        onClick={() => setActiveTab('overview')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'overview' ? 'bg-teal-500/10 text-teal-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                    >
                         <LayoutDashboard className="w-5 h-5" />
                         Overview
                     </button>
@@ -79,7 +83,10 @@ export function AdminDashboard() {
                         <BarChart className="w-5 h-5" />
                         Analytics
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition-colors">
+                    <button
+                        onClick={() => setActiveTab('settings')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'settings' ? 'bg-teal-500/10 text-teal-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                    >
                         <Settings className="w-5 h-5" />
                         Settings
                     </button>
@@ -115,52 +122,143 @@ export function AdminDashboard() {
                 <div className="flex-1 p-8 overflow-y-auto">
                     <div className="max-w-4xl mx-auto space-y-8">
 
-                        {/* Summary Cards */}
-                        <div className="grid grid-cols-3 gap-6">
-                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                                <h3 className="text-slate-400 text-sm font-medium mb-2">Total Views</h3>
-                                <p className="text-3xl font-bold text-white">1,240</p>
-                            </div>
-                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                                <h3 className="text-slate-400 text-sm font-medium mb-2">Leads Captured</h3>
-                                <p className="text-3xl font-bold text-teal-400">12</p>
-                            </div>
-                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                                <h3 className="text-slate-400 text-sm font-medium mb-2">Avg. Time</h3>
-                                <p className="text-3xl font-bold text-white">2m 15s</p>
-                            </div>
-                        </div>
-
-                        {/* Domain Manager */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="md:col-span-2">
-                                {agent ? (
-                                    <DomainManager
-                                        agentId={agent.id}
-                                        initialDomain={agent.website_config?.custom_domain}
-                                        token={localStorage.getItem(`admin_token_${slug}`) || ''}
-                                    />
-                                ) : (
-                                    <div className="p-12 text-center bg-slate-900 rounded-2xl border border-slate-800 text-slate-500">
-                                        Loading Domain Settings...
+                        {activeTab === 'overview' && (
+                            <>
+                                {/* Summary Cards */}
+                                <div className="grid grid-cols-3 gap-6">
+                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                                        <h3 className="text-slate-400 text-sm font-medium mb-2">Total Views</h3>
+                                        <p className="text-3xl font-bold text-white">1,240</p>
                                     </div>
-                                )}
-                            </div>
-                        </div>
+                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                                        <h3 className="text-slate-400 text-sm font-medium mb-2">Leads Captured</h3>
+                                        <p className="text-3xl font-bold text-teal-400">12</p>
+                                    </div>
+                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                                        <h3 className="text-slate-400 text-sm font-medium mb-2">Avg. Time</h3>
+                                        <p className="text-3xl font-bold text-white">2m 15s</p>
+                                    </div>
+                                </div>
 
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
-                            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <LayoutDashboard className="w-8 h-8 text-slate-500" />
+                                {/* Domain Manager */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2">
+                                        {agent ? (
+                                            <DomainManager
+                                                agentId={agent.id}
+                                                initialDomain={agent.website_config?.custom_domain}
+                                                token={localStorage.getItem(`admin_token_${slug}`) || ''}
+                                            />
+                                        ) : (
+                                            <div className="p-12 text-center bg-slate-900 rounded-2xl border border-slate-800 text-slate-500">
+                                                Loading Domain Settings...
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {activeTab === 'settings' && (
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+                                <h2 className="text-xl font-bold text-white mb-6">Security Settings</h2>
+
+                                <div className="max-w-md">
+                                    <ChangePasswordForm slug={slug || ''} />
+                                </div>
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Welcome to your Dashboard</h2>
-                            <p className="text-slate-400 max-w-lg mx-auto">
-                                This is where you'll manage your leads, analytics, and website settings.
-                                Use the "Open Visual Editor" button above to customize your public website.
-                            </p>
-                        </div>
+                        )}
+
+                        {activeTab === 'overview' && (
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
+                                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <LayoutDashboard className="w-8 h-8 text-slate-500" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-white mb-2">Welcome to your Dashboard</h2>
+                                <p className="text-slate-400 max-w-lg mx-auto">
+                                    This is where you'll manage your leads, analytics, and website settings.
+                                    Use the "Open Visual Editor" button above to customize your public website.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
         </div>
     )
 }
+
+function ChangePasswordForm({ slug }: { slug: string }) {
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+    const [message, setMessage] = useState('')
+    const { adminApi } = require('../../services/adminApi') // Lazy import to avoid hoisting issues? Or just use import from top
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (newPassword !== confirmPassword) {
+            setStatus('error')
+            setMessage('Passwords do not match')
+            return
+        }
+        if (newPassword.length < 6) {
+            setStatus('error')
+            setMessage('Password must be at least 6 characters')
+            return
+        }
+
+        setStatus('loading')
+        try {
+            const token = localStorage.getItem(`admin_token_${slug}`)
+            if (!token) throw new Error('Not authenticated')
+
+            await adminApi.changePassword(newPassword, token)
+            setStatus('success')
+            setMessage('Password updated successfully')
+            setNewPassword('')
+            setConfirmPassword('')
+        } catch (err: any) {
+            setStatus('error')
+            setMessage(err.message || 'Failed to update password')
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">New Password</label>
+                <input
+                    type="password"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none focus:border-teal-500"
+                    placeholder="Enter new password"
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Confirm Password</label>
+                <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none focus:border-teal-500"
+                    placeholder="Confirm new password"
+                />
+            </div>
+
+            {message && (
+                <div className={`p-3 rounded-lg text-sm ${status === 'success' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                    {message}
+                </div>
+            )}
+
+            <button
+                type="submit"
+                disabled={status === 'loading'}
+                className="px-4 py-2 bg-teal-500 text-slate-900 font-bold rounded-lg hover:bg-teal-400 transition-colors disabled:opacity-50"
+            >
+                {status === 'loading' ? 'Updating...' : 'Update Password'}
+            </button>
+        </form>
+    )     

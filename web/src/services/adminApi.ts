@@ -21,7 +21,39 @@ const getAuthHeaders = (): Record<string, string> => {
 }
 
 export const adminApi = {
-    // Legacy Login removed. No more separate login.
+    // Agent Login (New System)
+    login: async (slug: string, password: string) => {
+        const response = await fetch(`${API_BASE}/api/agent/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug, password }),
+        })
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({ error: 'Login failed' }))
+            throw new Error(data.error || 'Login failed')
+        }
+
+        return response.json()
+    },
+
+    changePassword: async (newPassword: string, token: string) => {
+        const response = await fetch(`${API_BASE}/api/agent/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ newPassword }),
+        })
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({ error: 'Failed to update password' }))
+            throw new Error(data.error || 'Failed to update password')
+        }
+
+        return response.json()
+    },
 
     getConfig: async (id: string) => {
         const response = await fetch(`${API_BASE}/api/admin/config/${id}`, {
