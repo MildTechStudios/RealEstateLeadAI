@@ -263,6 +263,28 @@ export async function getLeadBySlug(slug: string): Promise<{ success: boolean; d
 }
 
 /**
+ * Get agent by slug for LOGIN (ignores published status)
+ */
+export async function getAgentBySlug(slug: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    const client = getSupabaseClient();
+    if (!client) return { success: false, error: 'Database not configured' };
+
+    try {
+        const { data, error } = await client
+            .from('scraped_agents')
+            .select('*')
+            .eq('website_slug', slug)
+            .single();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (err) {
+        console.error('[DB] Error fetching agent by slug:', err);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+}
+
+/**
  * Get a lead by its ID
  */
 export async function getLeadById(id: string): Promise<{ success: boolean; data?: any; error?: string }> {

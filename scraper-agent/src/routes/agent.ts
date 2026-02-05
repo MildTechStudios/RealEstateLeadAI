@@ -1,6 +1,6 @@
 
 import { Router } from 'express';
-import { getLeadBySlug, getLeadById, updateLead } from '../services/db';
+import { getLeadBySlug, getLeadById, updateLead, getAgentBySlug } from '../services/db';
 import { hashPassword, verifyPassword, generateToken, verifyToken } from '../services/auth';
 
 const router = Router();
@@ -10,14 +10,17 @@ router.post('/login', async (req, res) => {
     try {
         const { slug, password } = req.body;
 
+        console.log(`[Auth] Login attempt for slug: ${slug}`);
+
         if (!slug || !password) {
             return res.status(400).json({ error: 'Missing slug or password' });
         }
 
-        // 1. Find Agent
-        const { data: agent, error } = await getLeadBySlug(slug);
+        // 1. Find Agent (Auth lookup - ignores published status)
+        const { data: agent, error } = await getAgentBySlug(slug);
+
         if (error || !agent) {
-            // Security: simple error message to avoid enumerating slugs
+            console.warn(`[Auth] Login failed: Agent not found for slug '${slug}'`);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -44,14 +47,17 @@ router.post('/login', async (req, res) => {
                 await updateLead(agent.id, { password_hash: newHash });
                 isValid = true;
             } else {
-                console.warn(`[Auth] Agent ${slug} has no hash and provided password is not default.`);
+                console.warn(`[Auth] Agent ${slug} has no hash and provided password '${password}' is not default.`);
                 isValid = false;
             }
         }
 
         if (!isValid) {
+            console.warn(`[Auth] Login failed: Password mismatch for ${slug}`);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        console.log(`[Auth] Login success for ${slug}`);
 
         // 3. Generate Token
         const token = generateToken(agent.id, agent.website_slug);
