@@ -1,50 +1,9 @@
-import { useState, useEffect } from 'react'
 import { PublicWebsite } from './pages/PublicWebsite'
 import App from './App'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+import { useDomainLookup } from './hooks/useDomainLookup'
 
 export function DomainRouter() {
-    const [loading, setLoading] = useState(true)
-    const [customSlug, setCustomSlug] = useState<string | null>(null)
-    const [error, setError] = useState<boolean>(false)
-
-    useEffect(() => {
-        const checkDomain = async () => {
-            const hostname = window.location.hostname
-
-            // Allow localhost/vercel to pass through to main App
-            if (hostname.includes('localhost') ||
-                hostname.includes('127.0.0.1') ||
-                hostname.includes('.vercel.app') ||
-                hostname === 'agent-scraper-web.vercel.app') { // Explicit fallback
-                setLoading(false)
-                return
-            }
-
-            try {
-                // It's a custom domain! Check if it maps to an agent.
-                const res = await fetch(`${API_BASE}/api/public/lookup-domain?domain=${hostname}`)
-                if (res.ok) {
-                    const data = await res.json()
-                    if (data.slug) {
-                        setCustomSlug(data.slug)
-                    } else {
-                        setError(true)
-                    }
-                } else {
-                    setError(true)
-                }
-            } catch (err) {
-                console.error('Domain lookup failed', err)
-                setError(true)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        checkDomain()
-    }, [])
+    const { loading, slug: customSlug, error } = useDomainLookup()
 
     if (loading) {
         return (

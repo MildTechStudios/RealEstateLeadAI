@@ -5,16 +5,19 @@ import './index.css'
 // import App from './App.tsx'
 import { PublicWebsite } from './pages/PublicWebsite.tsx'
 import { AdminLogin } from './pages/admin/AdminLogin.tsx'
+// import { CreateLead } from './pages/CreateLead.tsx'
 import { AdminDashboard } from './pages/admin/AdminDashboard.tsx'
 
 import { DomainRouter } from './DomainRouter.tsx'
+
+import { DomainAdminRedirect } from './components/admin/DomainAdminRedirect.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<DomainRouter />} />
-
+        <Route path="/admin" element={<DomainAdminRedirect />} />
         {/* Public Website */}
         <Route path="/w/:slug" element={<PublicWebsite />} />
 
