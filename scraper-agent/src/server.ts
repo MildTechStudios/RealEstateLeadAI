@@ -35,7 +35,6 @@ import { seedDefaultPasswords } from './services/auth';
 // seedDefaultPasswords().catch(err => console.error('[Server] Seeding failed:', err));
 
 // Admin Seed Route (Protected)
-import { verifySupabaseUser } from './middleware/supabaseAuth';
 app.post('/api/admin/seed-passwords', verifySupabaseUser, async (req, res) => {
     try {
         await seedDefaultPasswords();
