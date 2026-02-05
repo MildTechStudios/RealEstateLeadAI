@@ -46,56 +46,79 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
         setStatus(null)
 
         try {
+            // Step 1: Try to add domain to Vercel
             const result = await adminApi.addDomain(domain, token)
             setStatus(result)
-        } catch (err: any) {
-            setError(err.message)
 
-            // If the error contains verification info (ownership conflict), show it!
+            // Step 2: Save to our config (only if Vercel add succeeded)
+            try {
+                console.log('[DomainManager] Saving custom_domain to config:', domain)
+                await adminApi.updateConfig(agentId, { custom_domain: domain }, token)
+                console.log('[DomainManager] Domain saved to config successfully')
+            } catch (configErr) {
+                console.error('[DomainManager] Failed to save domain to config:', configErr)
+            }
+
+        } catch (err: any) {
+            console.log('[DomainManager] addDomain error:', err.message, err.details)
+
+            // Parse error details
             const errorCode = err.details?.code || err.details?.error?.code;
             const verification = err.details?.verification || err.details?.error?.verification;
 
-            // If the error contains verification info (ownership conflict) or is existing domain
-            if (errorCode === 'existing_project_domain' || verification) {
+            // Case 1: Domain already exists on THIS Vercel project
+            if (errorCode === 'existing_project_domain') {
+                console.log('[DomainManager] Domain already exists, attempting to fetch status...')
 
-                // If it already exists, just fetch the status to "adopt" it
-                if (errorCode === 'existing_project_domain') {
-                    console.log('Domain already exists, fetching status...');
-                    setError(null);
-                    const result = await checkStatus(domain);
-                    if (!result) {
-                        setError({
-                            message: "This domain is connected to another Vercel project.",
-                            code: "existing_project_domain",
-                            solution: "Please remove it from the other project or contact support."
-                        } as any);
+                try {
+                    const existingStatus = await adminApi.getDomainStatus(domain, token)
+                    if (existingStatus) {
+                        // Great! Domain is on our project, just show the status
+                        setStatus(existingStatus)
+                        setError(null)
+
+                        // Also save to config
+                        await adminApi.updateConfig(agentId, { custom_domain: domain }, token)
+                        return // Success path
                     }
-                    return; // checkStatus will update state if successful
+                } catch (statusErr) {
+                    console.log('[DomainManager] getDomainStatus failed:', statusErr)
                 }
 
-                const verificationList = Array.isArray(verification)
-                    ? verification
-                    : (verification ? [verification] : []);
+                // If we get here, the domain exists but NOT on our project (cross-project conflict)
+                setError({
+                    message: "This domain is connected to another Vercel project.",
+                    code: "cross_project_conflict",
+                    solution: "Please remove it from the other Vercel project first, or verify ownership via TXT record."
+                } as any)
+                return
+            }
 
+            // Case 2: Domain needs verification (TXT record)
+            if (verification) {
+                const verificationList = Array.isArray(verification) ? verification : [verification]
                 setStatus({
                     name: domain,
                     verified: false,
                     verification: verificationList,
                     error: err.details
                 })
+
+                // Still save to config so user can retry verification later
+                try {
+                    await adminApi.updateConfig(agentId, { custom_domain: domain }, token)
+                } catch (configErr) {
+                    console.error('[DomainManager] Failed to save domain to config:', configErr)
+                }
+                return
             }
-        }
 
-        // ALWAYS save the domain to config, regardless of Vercel API result
-        try {
-            console.log('[DomainManager] Saving custom_domain to config:', domain)
-            await adminApi.updateConfig(agentId, { custom_domain: domain }, token)
-            console.log('[DomainManager] Domain saved to config successfully')
-        } catch (configErr) {
-            console.error('[DomainManager] Failed to save domain to config:', configErr)
+            // Case 3: Generic error - display as-is
+            setError(err.message || 'Failed to add domain')
+        } finally {
+            // ALWAYS reset loading state
+            setLoading(false)
         }
-
-        setLoading(false)
     }
 
     const handleVerify = async () => {
