@@ -22,15 +22,33 @@ router.post('/login', async (req, res) => {
         }
 
         // 2. Verify Password
-        // If password_hash is null (migration didn't run?), fail or try default? 
-        // We assume seedDefaultPasswords() ran.
-        if (!agent.password_hash) {
-            console.warn(`[Auth] Agent ${slug} has no password hash. Attempting fallback or denying.`);
-            // STRICT MODE: Deny. They must have a hash.
-            return res.status(401).json({ error: 'Account not set up for login. Contact Admin.' });
+        let isValid = false;
+
+        if (agent.password_hash) {
+            isValid = await verifyPassword(password, agent.password_hash);
+        } else {
+            // Lazy Seeding: If no hash, check if they are using the default "welcome123"
+            // If so, grant access AND save the hash for future.
+            console.log(`[Auth] Agent ${slug} has no password hash. Checking default credentials...`);
+
+            // Hardcoded default check (or use verifyPassword against a known hash of welcome123 if we wanted to be stricter, but simple string check is fine here for the init)
+            // Actually, let's use the DEFAULT_PASSWORD constant but we need to import it or just hardcode it here as we know it.
+            // Better: use verifyPassword with the known default hash or just check string equality if we know what they sent.
+            // Since we know the default is 'welcome123', let's check that.
+
+            if (password === 'welcome123') {
+                console.log(`[Auth] Default password accepted. Migrating agent ${slug} to secure hash...`);
+                const newHash = await hashPassword(password);
+
+                // Save to DB in background (await to be safe)
+                await updateLead(agent.id, { password_hash: newHash });
+                isValid = true;
+            } else {
+                console.warn(`[Auth] Agent ${slug} has no hash and provided password is not default.`);
+                isValid = false;
+            }
         }
 
-        const isValid = await verifyPassword(password, agent.password_hash);
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }

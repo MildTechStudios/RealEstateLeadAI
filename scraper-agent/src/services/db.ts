@@ -303,6 +303,7 @@ export interface LeadUpdateData {
     twitter_url?: string;
     youtube_url?: string;
     headshot_url?: string;
+    password_hash?: string;
 }
 
 export async function updateLead(
