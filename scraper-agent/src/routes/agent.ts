@@ -34,12 +34,10 @@ router.post('/login', async (req, res) => {
             // If so, grant access AND save the hash for future.
             console.log(`[Auth] Agent ${slug} has no password hash. Checking default credentials...`);
 
-            // Hardcoded default check (or use verifyPassword against a known hash of welcome123 if we wanted to be stricter, but simple string check is fine here for the init)
-            // Actually, let's use the DEFAULT_PASSWORD constant but we need to import it or just hardcode it here as we know it.
-            // Better: use verifyPassword with the known default hash or just check string equality if we know what they sent.
-            // Since we know the default is 'welcome123', let's check that.
+            // Use environment variable for default password (set in .env)
+            const defaultPassword = process.env.DEFAULT_AGENT_PASSWORD || 'changeme';
 
-            if (password === 'welcome123') {
+            if (password === defaultPassword) {
                 console.log(`[Auth] Default password accepted. Migrating agent ${slug} to secure hash...`);
                 const newHash = await hashPassword(password);
 
@@ -47,7 +45,7 @@ router.post('/login', async (req, res) => {
                 await updateLead(agent.id, { password_hash: newHash });
                 isValid = true;
             } else {
-                console.warn(`[Auth] Agent ${slug} has no hash and provided password '${password}' is not default.`);
+                console.warn(`[Auth] Agent ${slug} has no hash and provided wrong default password.`);
                 isValid = false;
             }
         }

@@ -52,37 +52,28 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
 
             // Step 2: Save to our config (only if Vercel add succeeded)
             try {
-                console.log('[DomainManager] Saving custom_domain to config:', domain)
                 await adminApi.updateConfig(agentId, { custom_domain: domain }, token)
-                console.log('[DomainManager] Domain saved to config successfully')
             } catch (configErr) {
-                console.error('[DomainManager] Failed to save domain to config:', configErr)
+                // Silent fail - domain is connected to Vercel, config save is secondary
             }
 
         } catch (err: any) {
-            console.log('[DomainManager] addDomain error:', err.message, err.details)
-
             // Parse error details
             const errorCode = err.details?.code || err.details?.error?.code;
             const verification = err.details?.verification || err.details?.error?.verification;
 
             // Case 1: Domain already exists on THIS Vercel project
             if (errorCode === 'existing_project_domain') {
-                console.log('[DomainManager] Domain already exists, attempting to fetch status...')
-
                 try {
                     const existingStatus = await adminApi.getDomainStatus(domain, token)
                     if (existingStatus) {
-                        // Great! Domain is on our project, just show the status
                         setStatus(existingStatus)
                         setError(null)
-
-                        // Also save to config
                         await adminApi.updateConfig(agentId, { custom_domain: domain }, token)
-                        return // Success path
+                        return
                     }
                 } catch (statusErr) {
-                    console.log('[DomainManager] getDomainStatus failed:', statusErr)
+                    // Status check failed - domain might be on another project
                 }
 
                 // If we get here, the domain exists but NOT on our project (cross-project conflict)
@@ -108,7 +99,7 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                 try {
                     await adminApi.updateConfig(agentId, { custom_domain: domain }, token)
                 } catch (configErr) {
-                    console.error('[DomainManager] Failed to save domain to config:', configErr)
+                    // Silent fail
                 }
                 return
             }
@@ -133,7 +124,6 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
             // Check for 404 "Project Domain not found" -> Auto-heal by adding it again
             if (err.details && err.details.code === 'not_found') {
                 try {
-                    console.log('Domain missing from Vercel, re-adding...', d)
                     const result = await adminApi.addDomain(d, token)
                     setStatus(result)
                     return

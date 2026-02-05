@@ -5,7 +5,7 @@ import { getDb } from './db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-change-me';
 const SALT_ROUNDS = 10;
-const DEFAULT_PASSWORD = 'welcome123';
+const DEFAULT_PASSWORD = process.env.DEFAULT_AGENT_PASSWORD || 'changeme'; // Set in .env for security
 
 // 1. Password Hashing
 export async function hashPassword(password: string): Promise<string> {
