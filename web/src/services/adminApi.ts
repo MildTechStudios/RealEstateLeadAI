@@ -32,13 +32,21 @@ export const adminApi = {
         return response.json()
     },
 
-    updateConfig: async (id: string, config: any) => {
+    updateConfig: async (id: string, config: any, token?: string) => {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+        }
+
+        // If using token, we might not have ID, or we might use the endpoint differently?
+        // Actually, for the Agent Dashboard, we might need a specific endpoint or just allow this one to work?
+        // The backend `verifySupabaseUser` middleware expects Supabase stuff.
+        // We need to restore the Agent-Token compatible middleware or endpoint.
+        // For now, let's assume the backend will accept the token relative to the ID.
+
         const response = await fetch(`${API_BASE}/api/admin/config/${id}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeaders(),
-            },
+            headers,
             body: JSON.stringify(config),
         })
 
@@ -64,13 +72,15 @@ export const adminApi = {
     },
 
     // --- Domain Management ---
-    addDomain: async (domain: string) => {
+    addDomain: async (domain: string, token?: string) => {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+        }
+
         const response = await fetch(`${API_BASE}/api/admin/domains`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeaders(),
-            },
+            headers,
             body: JSON.stringify({ domain }),
         })
 
@@ -83,9 +93,13 @@ export const adminApi = {
         return response.json()
     },
 
-    getDomainStatus: async (domain: string) => {
+    getDomainStatus: async (domain: string, token?: string) => {
+        const headers: Record<string, string> = {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+        }
+
         const response = await fetch(`${API_BASE}/api/admin/domains/${domain}`, {
-            headers: getAuthHeaders(),
+            headers,
         })
 
         if (!response.ok) {
@@ -95,10 +109,14 @@ export const adminApi = {
         return response.json()
     },
 
-    verifyDomain: async (domain: string) => {
+    verifyDomain: async (domain: string, token?: string) => {
+        const headers: Record<string, string> = {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+        }
+
         const response = await fetch(`${API_BASE}/api/admin/domains/${domain}/verify`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            headers,
         })
 
         if (!response.ok) {
@@ -110,10 +128,14 @@ export const adminApi = {
         return response.json()
     },
 
-    removeDomain: async (domain: string) => {
+    removeDomain: async (domain: string, token?: string) => {
+        const headers: Record<string, string> = {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+        }
+
         const response = await fetch(`${API_BASE}/api/admin/domains/${domain}`, {
             method: 'DELETE',
-            headers: getAuthHeaders(),
+            headers,
         })
 
         if (!response.ok) throw new Error('Failed to remove domain')

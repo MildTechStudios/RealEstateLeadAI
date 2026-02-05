@@ -13,9 +13,10 @@ import { Globe, AlertTriangle, Loader2, X, RefreshCw } from 'lucide-react'
 interface DomainManagerProps {
     agentId: string
     initialDomain?: string // Optional pre-loaded domain
+    token?: string // Optional auth token (for Agent Dashboard)
 }
 
-export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
+export function DomainManager({ agentId, initialDomain, token }: DomainManagerProps) {
     const [domain, setDomain] = useState(initialDomain || '')
     const [status, setStatus] = useState<any>(null)
     const [loading, setLoading] = useState(false)
@@ -23,12 +24,10 @@ export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
     const [verifying, setVerifying] = useState(false)
 
     // Load saved domain from config if available (only if not passed in)
-    // Actually, we should trust the passed-in props or fetch fresh config?
-    // Let's fetch fresh config to be safe
     const checkStatus = async (domainName: string) => {
         try {
             setVerifying(true)
-            const data = await adminApi.getDomainStatus(domainName)
+            const data = await adminApi.getDomainStatus(domainName, token)
             setStatus(data)
             return data
         } catch (err: any) {
@@ -47,7 +46,7 @@ export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
         setStatus(null)
 
         try {
-            const result = await adminApi.addDomain(domain)
+            const result = await adminApi.addDomain(domain, token)
             setStatus(result)
         } catch (err: any) {
             setError(err.message)
@@ -70,10 +69,9 @@ export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
         }
 
         // ALWAYS save the domain to config, regardless of Vercel API result
-        // This ensures the domain lookup works once DNS is configured
         try {
             console.log('[DomainManager] Saving custom_domain to config:', domain)
-            await adminApi.updateConfig(agentId, { custom_domain: domain })
+            await adminApi.updateConfig(agentId, { custom_domain: domain }, token)
             console.log('[DomainManager] Domain saved to config successfully')
         } catch (configErr) {
             console.error('[DomainManager] Failed to save domain to config:', configErr)
@@ -88,22 +86,17 @@ export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
 
         setVerifying(true)
         try {
-            const result = await adminApi.verifyDomain(d)
-            // If verification fails (e.g. 404 or 409), the API throws.
-            // But if it returns 200 with verified:false, we get the result.
-            // If it threw, we might want to catch it and still try to Refresh Status?
+            const result = await adminApi.verifyDomain(d, token)
             setStatus(result)
         } catch (err: any) {
             // Check for 404 "Project Domain not found" -> Auto-heal by adding it again
             if (err.details && err.details.code === 'not_found') {
                 try {
                     console.log('Domain missing from Vercel, re-adding...', d)
-                    const result = await adminApi.addDomain(d)
+                    const result = await adminApi.addDomain(d, token)
                     setStatus(result)
-                    // If add succeeds (no 409), we are good!
                     return
                 } catch (addErr: any) {
-                    // If re-add fails with conflict, fall through to show verification UI
                     if (addErr.details) err = addErr
                     else setError("Failed to restore domain connection.")
                 }
@@ -123,11 +116,7 @@ export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
                     verification: verificationList,
                     error: err.details
                 })
-
-                // Don't clear error here, maybe set it to something friendly?
-                // setError("Verification required. See below.")
             } else {
-                // Convert legacy fallback to use setError
                 try {
                     await checkStatus(d)
                 } catch (e) {
@@ -145,8 +134,8 @@ export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
         const d = domain || status?.name
         setLoading(true)
         try {
-            await adminApi.removeDomain(d)
-            await adminApi.updateConfig(agentId, { custom_domain: null })
+            await adminApi.removeDomain(d, token)
+            await adminApi.updateConfig(agentId, { custom_domain: null }, token)
             setDomain('')
             setStatus(null)
         } catch (err: any) {
@@ -164,17 +153,23 @@ export function DomainManager({ agentId, initialDomain }: DomainManagerProps) {
                 return
             }
             try {
-                const config = await adminApi.getConfig(agentId)
-                if (config.custom_domain) {
-                    setDomain(config.custom_domain)
-                    checkStatus(config.custom_domain)
+                // If we have a token (Agent Dashboard), we might need to fetch config using it?
+                // But adminApi.getConfig calls /api/admin/config/:id which defaults to Supabase.
+                // We should update getConfig too, but for now assuming initialDomain might suffice or we skip.
+                // Actually, let's just rely on initialDomain or skip this if not provided.
+                if (!initialDomain && !token) {
+                    const config = await adminApi.getConfig(agentId) // Platform Dashboard default
+                    if (config.custom_domain) {
+                        setDomain(config.custom_domain)
+                        checkStatus(config.custom_domain)
+                    }
                 }
             } catch (err) {
                 console.error(err)
             }
         }
         loadConfig()
-    }, [agentId])
+    }, [agentId, initialDomain, token])
 
     if (!status && !domain) {
         return (

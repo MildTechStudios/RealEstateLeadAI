@@ -134,7 +134,17 @@ export function AdminDashboard() {
                         {/* Domain Manager */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
-                                <DomainManager slug={slug || ''} token={localStorage.getItem(`admin_token_${slug}`) || ''} />
+                                {agent ? (
+                                    <DomainManager
+                                        agentId={agent.id}
+                                        initialDomain={agent.website_config?.custom_domain}
+                                        token={localStorage.getItem(`admin_token_${slug}`) || ''}
+                                    />
+                                ) : (
+                                    <div className="p-12 text-center bg-slate-900 rounded-2xl border border-slate-800 text-slate-500">
+                                        Loading Domain Settings...
+                                    </div>
+                                )}
                             </div>
                         </div>
 

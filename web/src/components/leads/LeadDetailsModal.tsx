@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Edit2, Save, Loader2, Mail, Phone, MapPin, Building, User, ExternalLink, Facebook, Linkedin, Instagram, Twitter, Youtube } from 'lucide-react'
 import { type DBProfile, updateLead } from '../../services/api'
+import { DomainManager } from '../admin/DomainManager'
 
 interface LeadDetailsModalProps {
     lead: DBProfile
@@ -81,15 +82,10 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
             lowBio === 'no bio available'
     }
 
-    // Add DomainManager import
-    import { DomainManager } from '../admin/DomainManager'
-
-    // ... existing code ...
-
     // State for tabs
     const [activeTab, setActiveTab] = useState<'profile' | 'domain'>('profile')
 
-    // ... existing handleSave ...
+    if (!isOpen) return null
 
     return (
         <AnimatePresence>
