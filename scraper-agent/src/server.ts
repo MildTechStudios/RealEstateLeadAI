@@ -32,7 +32,18 @@ app.use('/api/agent', agentRoutes);
 import { seedDefaultPasswords } from './services/auth';
 
 // Run seeding on startup
-seedDefaultPasswords().catch(err => console.error('[Server] Seeding failed:', err));
+// seedDefaultPasswords().catch(err => console.error('[Server] Seeding failed:', err));
+
+// Admin Seed Route (Protected)
+import { verifySupabaseUser } from './middleware/supabaseAuth';
+app.post('/api/admin/seed-passwords', verifySupabaseUser, async (req, res) => {
+    try {
+        await seedDefaultPasswords();
+        res.json({ success: true, message: 'Seeding process triggered' });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { LogOut, Zap, LayoutDashboard, Settings, BarChart } from 'lucide-react'
 import { getWebsiteBySlug, type DBProfile } from '../../services/api'
+import { adminApi } from '../../services/adminApi'
 import { DomainManager } from '../../components/admin/DomainManager'
 
 export function AdminDashboard() {
@@ -193,7 +194,6 @@ function ChangePasswordForm({ slug }: { slug: string }) {
     const [confirmPassword, setConfirmPassword] = useState('')
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
     const [message, setMessage] = useState('')
-    const { adminApi } = require('../../services/adminApi') // Lazy import to avoid hoisting issues? Or just use import from top
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -261,4 +261,5 @@ function ChangePasswordForm({ slug }: { slug: string }) {
                 {status === 'loading' ? 'Updating...' : 'Update Password'}
             </button>
         </form>
-    )     
+    )
+}

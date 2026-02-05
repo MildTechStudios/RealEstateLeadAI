@@ -1,5 +1,5 @@
 
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDb } from './db';
 
@@ -66,7 +66,7 @@ export async function seedDefaultPasswords() {
             .from('scraped_agents')
             .update({ password_hash: defaultHash })
             .is('password_hash', null)
-            .select('id', { count: 'exact' });
+            .select('id');
 
         if (updateError) {
             console.error('[Auth] Error bulk seeding passwords:', updateError);
