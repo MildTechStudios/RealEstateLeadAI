@@ -61,6 +61,7 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                 // If it already exists, just fetch the status to "adopt" it
                 if (errorCode === 'existing_project_domain') {
                     console.log('Domain already exists, fetching status...');
+                    setError(null); // Clear the error message so UI doesn't show "Failed to add domain"
                     await checkStatus(domain);
                     return; // checkStatus will update state
                 }
