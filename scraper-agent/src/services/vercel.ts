@@ -60,8 +60,9 @@ export const vercelService = {
     },
 
     getDomainStatus: async (domain: string) => {
-        // GET /v9/projects/:idOrName/domains/:domain
-        const response = await fetch(getUrl(`/v9/projects/${PROJECT_ID}/domains/${domain}`), {
+        // GET /v10/projects/:idOrName/domains/:domain
+        const url = getUrl(`/v10/projects/${PROJECT_ID}/domains/${domain}`);
+        const response = await fetch(url, {
             method: 'GET',
             headers,
         });
@@ -72,7 +73,10 @@ export const vercelService = {
             console.error('[Vercel] Get Status Failed:', response.status, text);
             throw new Error('Failed to get domain status');
         }
-        return response.json();
+
+        const data = await response.json();
+        console.log(`[Vercel] Domain Status for ${domain}:`, JSON.stringify(data, null, 2)); // Log full detail
+        return data;
     },
 
     removeDomain: async (domain: string) => {
