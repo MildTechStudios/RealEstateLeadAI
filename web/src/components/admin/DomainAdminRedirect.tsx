@@ -14,8 +14,8 @@ export function DomainAdminRedirect() {
 
     // If it's a custom domain and we have a slug, redirect to the main app's admin panel
     if (isCustomDomain && slug) {
-        const adminUrl = `https://agent-scraper-web.vercel.app/w/${slug}/admin`
-        if (window.location.origin !== 'https://agent-scraper-web.vercel.app') {
+        const adminUrl = `https://real-estate-lead-ai.vercel.app/w/${slug}/admin`
+        if (window.location.origin !== 'https://real-estate-lead-ai.vercel.app') {
             window.location.href = adminUrl
             return null
         }

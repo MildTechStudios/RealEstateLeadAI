@@ -13,11 +13,10 @@ export function useDomainLookup() {
         const checkDomain = async () => {
             const hostname = window.location.hostname
 
-            // Allow localhost/vercel to pass through
             if (hostname.includes('localhost') ||
                 hostname.includes('127.0.0.1') ||
                 hostname.includes('.vercel.app') ||
-                hostname === 'agent-scraper-web.vercel.app') {
+                hostname === 'real-estate-lead-ai.vercel.app') {
                 setIsCustomDomain(false)
                 setLoading(false)
                 return
