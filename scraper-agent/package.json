@@ -6,9 +6,6 @@
   "scripts": {
     "start": "ts-node src/main.ts",
     "server": "ts-node -r dotenv/config src/server.ts",
-    "test:vercel": "ts-node src/test-vercel-config.ts",
-    "test:domain": "ts-node src/test-vercel-domain.ts",
-    "test:cb": "ts-node src/test-cb.ts",
     "build": "tsc",
     "clean": "rimraf dist"
   },
