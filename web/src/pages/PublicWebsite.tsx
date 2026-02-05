@@ -1077,6 +1077,20 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
                             )}
 
                             <p className="text-sm mb-4 font-medium text-slate-300">{agent.office_name}</p>
+
+                            {/* Compliance Logos */}
+                            <div className="flex items-center gap-4 mb-6">
+                                <img
+                                    src="/assets/Fair-Housing-Logo-PNG-Images-HD.png"
+                                    alt="Equal Housing Opportunity"
+                                    className="h-10 object-contain opacity-70"
+                                    title="Equal Housing Opportunity"
+                                />
+                                <div className="flex items-center gap-1 text-white opacity-70" title="Realtor®">
+                                    <span className="text-xl font-bold tracking-tight">REALTOR®</span>
+                                </div>
+                            </div>
+
                             <div className="space-y-2 text-sm">
                                 <p className="text-slate-500">&copy; {new Date().getFullYear()} {agent.full_name}.</p>
                                 <p className="text-slate-600 text-xs mt-4">All rights reserved. Powered by RealEstateLeadAI.</p>
