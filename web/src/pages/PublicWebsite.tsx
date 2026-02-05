@@ -957,12 +957,12 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
             </section>
 
             {/* ===== FOOTER ===== */}
-            <footer className="bg-slate-950 text-slate-400 py-20 border-t border-slate-900">
+            <footer className="bg-slate-950 text-slate-400 py-12 border-t border-slate-900">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
                         {/* Brand */}
-                        <div className="space-y-6">
-                            <h3 className="text-3xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        <div className="space-y-3">
+                            <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
                                 {agent.full_name}
                             </h3>
                             {agent.license_number && (
@@ -970,37 +970,37 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
                                     License #: {agent.license_number}
                                 </p>
                             )}
-                            <p className="leading-relaxed">
+                            <p className="leading-relaxed text-sm">
                                 <EditableText
-                                    value={localConfig.footerBio || (agent.bio ? agent.bio.slice(0, 150) + (agent.bio.length > 150 ? '...' : '') : 'Dedicated to providing exceptional real estate services tailored to your unique needs.')}
+                                    value={localConfig.footerBio || (agent.bio ? agent.bio.slice(0, 100) + (agent.bio.length > 100 ? '...' : '') : 'Dedicated to exceptional real estate services.')}
                                     isEditing={isEditing}
                                     onChange={val => updateConfig('footerBio', val)}
                                     multiline
                                 />
                             </p>
-                            <div className="flex gap-4 pt-2">
+                            <div className="flex gap-2 pt-1">
                                 {agent.linkedin_url && (
-                                    <a href={agent.linkedin_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
+                                    <a href={agent.linkedin_url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Linkedin className="w-4 h-4" />
                                     </a>
                                 )}
                                 {agent.facebook_url && (
-                                    <a href={agent.facebook_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
+                                    <a href={agent.facebook_url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Facebook className="w-4 h-4" />
                                     </a>
                                 )}
                                 {agent.instagram_url && (
-                                    <a href={agent.instagram_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
+                                    <a href={agent.instagram_url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Instagram className="w-4 h-4" />
                                     </a>
                                 )}
                                 {agent.twitter_url && (
-                                    <a href={agent.twitter_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
+                                    <a href={agent.twitter_url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Twitter className="w-4 h-4" />
                                     </a>
                                 )}
                                 {agent.youtube_url && (
-                                    <a href={agent.youtube_url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
+                                    <a href={agent.youtube_url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-primary transition-colors border border-slate-800">
                                         <Youtube className="w-4 h-4" />
                                     </a>
                                 )}
@@ -1051,51 +1051,28 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
 
                         {/* Branding Column */}
                         <div>
-                            <h4 className="text-white font-bold uppercase tracking-wider mb-6">Brokerage & Team</h4>
-
-                            {/* Team Logo */}
-                            {(localConfig.logoUrl || agent.logo_url) && (
-                                <div className="mb-6">
-                                    <div className="bg-white p-4 rounded-xl inline-block">
-                                        <img
-                                            src={localConfig.logoUrl || agent.logo_url}
-                                            alt={agent.full_name}
-                                            className="h-16 md:h-20 object-contain"
-                                        />
+                            <h4 className="text-white font-semibold uppercase tracking-wider mb-4 text-sm">Brokerage</h4>
+                            <div className="flex flex-row flex-nowrap items-center gap-4 mb-3">
+                                {(localConfig.logoUrl || agent.logo_url) && (
+                                    <div className="bg-white p-3 rounded-lg flex-shrink-0">
+                                        <img src={localConfig.logoUrl || agent.logo_url} alt={agent.full_name} className="h-14 object-contain" />
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-2 font-medium">Team / Agent</p>
-                                </div>
-                            )}
-
-                            {/* Brokerage Logo */}
-                            {agent.brokerage_logo_url ? (
-                                <div className="bg-white p-4 rounded-xl inline-block mb-3">
-                                    <img src={agent.brokerage_logo_url} alt={agent.brokerage} className="h-12 md:h-14 object-contain" />
-                                </div>
-                            ) : (
-                                <div className="text-2xl font-bold text-white mb-6">{agent.brokerage}</div>
-                            )}
-
-                            <p className="text-sm mb-4 font-medium text-slate-300">{agent.office_name}</p>
-
-                            {/* Compliance Logos */}
-                            <div className="flex items-center gap-4 mb-6">
-                                <img
-                                    src="/assets/Fair-Housing-Logo-PNG-Images-HD.png"
-                                    alt="Equal Housing Opportunity"
-                                    className="h-10 object-contain opacity-70"
-                                    title="Equal Housing Opportunity"
-                                />
-                                <div className="flex items-center gap-1 text-white opacity-70" title="Realtor®">
-                                    <span className="text-xl font-bold tracking-tight">REALTOR®</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2 text-sm">
-                                <p className="text-slate-500">&copy; {new Date().getFullYear()} {agent.full_name}.</p>
-                                <p className="text-slate-600 text-xs mt-4">All rights reserved. Powered by RealEstateLeadAI.</p>
+                                )}
+                                {agent.brokerage_logo_url && (
+                                    <div className="bg-white p-3 rounded-lg flex-shrink-0">
+                                        <img src={agent.brokerage_logo_url} alt={agent.brokerage} className="h-14 object-contain" />
+                                    </div>
+                                )}
                             </div>
                         </div>
+                    </div>
+
+                    {/* Bottom Bar: Compliance + Copyright */}
+                    <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-6">
+                            <img src="/assets/Fair-Housing-Logo-PNG-Images-HD.png" alt="Equal Housing Opportunity" className="h-12 opacity-80" />
+                        </div>
+                        <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} {agent.full_name}. All rights reserved.</p>
                     </div>
                 </div>
             </footer>
