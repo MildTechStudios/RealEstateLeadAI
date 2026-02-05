@@ -5,13 +5,25 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+let supabase: any = null
+
+if (supabaseUrl && supabaseKey) {
+    try {
+        supabase = createClient(supabaseUrl, supabaseKey)
+    } catch (e) {
+        console.error('Supabase init failed', e);
+    }
+}
 
 export function PlatformLogin() {
     const [username, setUsername] = useState('Admin')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    if (!supabase) {
+        return <div className="text-red-500 p-4">Error: Supabase not configured</div>
+    }
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()

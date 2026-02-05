@@ -21,9 +21,31 @@ import './App.css'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-const supabase = createClient(supabaseUrl, supabaseKey)
+
+let supabase: any = null
+
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey)
+  } catch (e) {
+    console.error('Supabase init failed', e);
+  }
+} else {
+  console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
+}
 
 function App() {
+  // If config is missing, show error screen immediately
+  if (!supabase) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-red-500 p-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">Configuration Error</h1>
+        <p>Missing Supabase Environment Variables.</p>
+        <p className="text-sm text-slate-400 mt-2">Please check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your deployment settings.</p>
+      </div>
+    )
+  }
+
   const [session, setSession] = useState<any>(null)
   const [checkingAuth, setCheckingAuth] = useState(true)
 

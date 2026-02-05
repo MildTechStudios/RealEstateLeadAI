@@ -2,20 +2,32 @@
 import { Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || ''; // Verification can be done with anon key or service key
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY for auth middleware');
+let supabase: any = null;
+
+if (supabaseUrl && supabaseKey) {
+    try {
+        supabase = createClient(supabaseUrl, supabaseKey);
+    } catch (e) {
+        console.error('Failed to initialize Supabase client:', e);
+    }
+} else {
+    console.warn('WARN: Missing SUPABASE_URL or SUPABASE_ANON_KEY. Auth middleware will block all requests.');
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface AuthenticatedRequest extends Request {
     user?: any;
 }
 
 export const verifySupabaseUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    // If Supabase isn't configured, block everything for safety
+    if (!supabase) {
+        console.error('Blocking request: Supabase not configured.');
+        return res.status(500).json({ error: 'Server authentication misconfigured.' });
+    }
+
     try {
         const authHeader = req.headers.authorization;
 
@@ -31,9 +43,6 @@ export const verifySupabaseUser = async (req: AuthenticatedRequest, res: Respons
         if (error || !user) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
-
-        // Optional: Check if user has specific role metadata if needed
-        // For now, any valid user is considered a platform admin (since we control user creation)
 
         req.user = user;
         next();
