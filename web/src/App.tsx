@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import type { Session, AuthChangeEvent } from '@supabase/supabase-js'
 import { PlatformLogin } from './pages/PlatformLogin'
 import { Header } from './components/layout/Header'
 import { AgentInput } from './components/agent/AgentInput'
@@ -46,7 +47,7 @@ function App() {
     )
   }
 
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [checkingAuth, setCheckingAuth] = useState(true)
 
   const [view, setView] = useState('import') // 'import' | 'leads'
@@ -58,14 +59,14 @@ function App() {
   const [saveState, setSaveState] = useState<'preview' | 'saving' | 'saved'>('preview')
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
       setSession(session)
       setCheckingAuth(false)
     })
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setSession(session)
     })
 
