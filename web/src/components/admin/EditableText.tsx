@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Pencil } from 'lucide-react'
 
 interface EditableTextProps {
@@ -8,7 +8,6 @@ interface EditableTextProps {
     className?: string
     style?: React.CSSProperties
     multiline?: boolean
-    placeholder?: string
 }
 
 export function EditableText({
@@ -17,15 +16,12 @@ export function EditableText({
     onChange,
     className = "",
     style,
-    multiline = false,
-    placeholder = "Click to edit..."
+    multiline = false
 }: EditableTextProps) {
-    const [localValue, setLocalValue] = useState(value)
     const containerRef = useRef<HTMLDivElement>(null)
 
     // Sync from parent if not currently focused (simplified)
     useEffect(() => {
-        setLocalValue(value)
         if (containerRef.current && containerRef.current.innerText !== value) {
             containerRef.current.innerText = value || ''
         }

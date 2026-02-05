@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { adminApi } from '../../services/adminApi'
-import { Globe, CheckCircle2, AlertTriangle, Loader2, X, RefreshCw } from 'lucide-react'
+import { Globe, AlertTriangle, Loader2, X, RefreshCw } from 'lucide-react'
 
 interface DomainManagerProps {
     slug: string
     token: string
 }
 
-export function DomainManager({ slug, token }: DomainManagerProps) {
+export function DomainManager({ token }: DomainManagerProps) {
     const [domain, setDomain] = useState('')
     const [status, setStatus] = useState<any>(null)
     const [loading, setLoading] = useState(false)

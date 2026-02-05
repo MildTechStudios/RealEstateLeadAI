@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { adminApi } from '../../../services/adminApi'
-import { motion } from 'framer-motion'
+// import { motion } from 'framer-motion'
 import { Save, RefreshCw } from 'lucide-react'
 
 // Predefined efficient color palettes for agents to choose from

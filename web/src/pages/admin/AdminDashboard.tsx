@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { LogOut, Zap, LayoutDashboard, Settings, User, BarChart } from 'lucide-react'
+import { LogOut, Zap, LayoutDashboard, Settings, BarChart } from 'lucide-react'
 import { getWebsiteBySlug, type DBProfile } from '../../services/api'
 import { DomainManager } from '../../components/admin/DomainManager'
 
