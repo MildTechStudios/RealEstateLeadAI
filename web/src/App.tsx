@@ -5,7 +5,9 @@
  * Now supports "Import" and "Leads Dashboard" views.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
+import { PlatformLogin } from './pages/PlatformLogin'
 import { Header } from './components/layout/Header'
 import { AgentInput } from './components/agent/AgentInput'
 import { AgentCard } from './components/agent/AgentCard'
@@ -17,7 +19,14 @@ import { extractProfile, isValidCBUrl } from './services/api'
 import type { CBAgentProfile } from './types/agent'
 import './App.css'
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
+
 function App() {
+  const [session, setSession] = useState<any>(null)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
   const [view, setView] = useState('import') // 'import' | 'leads'
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,6 +34,29 @@ function App() {
   const [profile, setProfile] = useState<CBAgentProfile | null>(null)
   // 'preview' is initial loaded state. 'saved' is when verified in DB.
   const [saveState, setSaveState] = useState<'preview' | 'saving' | 'saved'>('preview')
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setCheckingAuth(false)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (checkingAuth) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-teal-500">Loading...</div>
+  }
+
+  if (!session) {
+    return <PlatformLogin />
+  }
 
   const handleExtract = async () => {
     if (!url) {

@@ -45,16 +45,41 @@ export function isValidCBUrl(url: string): boolean {
 }
 
 /**
+ * Helper to get Auth Headers
+ */
+const getAuthHeaders = () => {
+    // Get the session from local storage (Supabase default)
+    // We scan for the key that starts with 'sb-' and ends with '-auth-token'
+    const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+    if (!key) return {}
+
+    try {
+        const session = JSON.parse(localStorage.getItem(key) || '{}')
+        if (session.access_token) {
+            return { 'Authorization': `Bearer ${session.access_token}` }
+        }
+    } catch (e) {
+        console.error('Error parsing auth token', e)
+    }
+    return {}
+}
+
+/**
  * Extract an agent profile from a CB URL
  */
 export async function extractProfile(url: string): Promise<CBAgentProfile> {
     const response = await fetch(`${API_BASE}/api/extract`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
         body: JSON.stringify({ url })
     })
 
     if (!response.ok) {
+        if (response.status === 401) throw new Error('Unauthorized: Please login')
+
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         // Handle extraction_errors array if present (from 422)
         if (errorData.extraction_errors && Array.isArray(errorData.extraction_errors)) {
@@ -70,9 +95,12 @@ export async function extractProfile(url: string): Promise<CBAgentProfile> {
  * Fetch all saved leads from the database
  */
 export async function getLeads(): Promise<DBProfile[]> {
-    const response = await fetch(`${API_BASE}/api/leads`)
+    const response = await fetch(`${API_BASE}/api/leads`, {
+        headers: getAuthHeaders()
+    })
 
     if (!response.ok) {
+        if (response.status === 401) throw new Error('Unauthorized: Please login')
         throw new Error('Failed to fetch leads')
     }
 
@@ -84,7 +112,8 @@ export async function getLeads(): Promise<DBProfile[]> {
  */
 export async function deleteLead(id: string): Promise<void> {
     const response = await fetch(`${API_BASE}/api/leads/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
     })
 
     if (!response.ok) {
@@ -101,7 +130,10 @@ export async function updateLeadConfig(
 ): Promise<void> {
     const response = await fetch(`${API_BASE}/api/leads/${id}/config`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
         body: JSON.stringify(config)
     })
 
@@ -133,7 +165,10 @@ export async function updateLead(
 ): Promise<void> {
     const response = await fetch(`${API_BASE}/api/leads/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
         body: JSON.stringify(data)
     })
 

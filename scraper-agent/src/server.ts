@@ -20,6 +20,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+import { verifySupabaseUser } from './middleware/supabaseAuth';
 import { adminRoutes } from './routes/admin';
 app.use('/api/admin', adminRoutes);
 
@@ -31,8 +32,8 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// CB Profile Extraction
-app.post('/api/extract', async (req, res) => {
+// CB Profile Extraction - PROTECTED
+app.post('/api/extract', verifySupabaseUser, async (req, res) => {
     const { url } = req.body;
 
     if (!url) {
@@ -73,8 +74,8 @@ app.post('/api/extract', async (req, res) => {
 
 import { getLeads } from './services/db';
 
-// Get All Leads
-app.get('/api/leads', async (req, res) => {
+// Get All Leads - PROTECTED
+app.get('/api/leads', verifySupabaseUser, async (req, res) => {
     try {
         console.log('[API] Fetching leads...');
         const result = await getLeads();
@@ -90,10 +91,10 @@ app.get('/api/leads', async (req, res) => {
     }
 });
 
-// Delete Lead
+// Delete Lead - PROTECTED
 import { deleteLead, updateLeadConfig, getLeadBySlug } from './services/db';
 
-app.delete('/api/leads/:id', async (req, res) => {
+app.delete('/api/leads/:id', verifySupabaseUser, async (req, res) => {
     try {
         const { id } = req.params;
         console.log(`[API] Deleting lead: ${id}`);
@@ -112,7 +113,7 @@ app.delete('/api/leads/:id', async (req, res) => {
 });
 
 // Update Lead Website Config (slug, published)
-app.patch('/api/leads/:id/config', async (req, res) => {
+app.patch('/api/leads/:id/config', verifySupabaseUser, async (req, res) => {
     try {
         const { id } = req.params;
         const { website_slug, website_published } = req.body;
@@ -131,7 +132,7 @@ app.patch('/api/leads/:id/config', async (req, res) => {
     }
 });
 
-// Get Website by Slug (Public)
+// Get Website by Slug (Public) - LEFT PUBLIC
 app.get('/api/website/:slug', async (req, res) => {
     try {
         const { slug } = req.params;
@@ -153,10 +154,10 @@ app.get('/api/website/:slug', async (req, res) => {
 // Contact Form Submission
 import { sendContactEmail } from './services/email';
 
-// Update Lead Profile Data
+// Update Lead Profile Data - PROTECTED
 import { updateLead } from './services/db';
 
-app.patch('/api/leads/:id', async (req, res) => {
+app.patch('/api/leads/:id', verifySupabaseUser, async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
@@ -232,7 +233,7 @@ app.post('/api/contact', async (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`\n🚀 Agent Scraper API running on http://localhost:${PORT}`);
-    console.log(`   POST /api/extract - Extract & Auto-Save CB profile`);
-    console.log(`   POST /api/contact - Send contact form email`);
+    console.log(`   POST /api/extract - Extract & Auto-Save CB profile (Protected)`);
+    console.log(`   POST /api/contact - Send contact form email (Public)`);
     console.log(`   GET  /api/health  - Health check\n`);
 });
