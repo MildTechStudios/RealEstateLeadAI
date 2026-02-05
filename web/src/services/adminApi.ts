@@ -130,15 +130,20 @@ export const adminApi = {
             ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
         }
 
-        const response = await fetch(`${API_BASE}/api/admin/domains/${domain}`, {
-            headers,
-        })
+        try {
+            const response = await fetch(`${API_BASE}/api/admin/domains/${domain}`, {
+                headers,
+            })
 
-        if (!response.ok) {
-            if (response.status === 404) return null
-            throw new Error('Failed to get domain status')
+            if (!response.ok) {
+                console.log('[adminApi] getDomainStatus failed:', response.status)
+                return null // Return null for ANY failure, not just 404
+            }
+            return response.json()
+        } catch (err) {
+            console.error('[adminApi] getDomainStatus network error:', err)
+            return null
         }
-        return response.json()
     },
 
     verifyDomain: async (domain: string, token?: string) => {
