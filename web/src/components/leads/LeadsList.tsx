@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getLeads, deleteLead, type DBProfile } from '../../services/api'
 import { adminApi } from '../../services/adminApi'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trash2, Search, ExternalLink, Mail, Phone, MapPin, Globe, Send, Shield, X, Loader2 } from 'lucide-react'
+import { Trash2, Search, Mail, Phone, MapPin, Globe, Shield, X, Loader2 } from 'lucide-react'
 import { LeadDetailsModal } from './LeadDetailsModal'
 
 export function LeadsList() {
@@ -128,8 +128,8 @@ export function LeadsList() {
                                     transition={{ duration: 0.2 }}
                                     onClick={() => setSelectedLead(lead)}
                                     className={`group relative bg-slate-900/60 backdrop-blur-md border rounded-xl p-4 transition-all duration-300 shadow-sm cursor-pointer ${selectedLead?.id === lead.id
-                                            ? 'border-teal-500/50 bg-teal-500/5 shadow-[0_0_20px_rgba(20,184,166,0.1)]'
-                                            : 'border-white/5 hover:bg-slate-800/60 hover:border-teal-500/20 hover:shadow-lg'
+                                        ? 'border-teal-500/50 bg-teal-500/5 shadow-[0_0_20px_rgba(20,184,166,0.1)]'
+                                        : 'border-white/5 hover:bg-slate-800/60 hover:border-teal-500/20 hover:shadow-lg'
                                         }`}
                                 >
                                     <div className="flex items-start sm:items-center gap-4">
