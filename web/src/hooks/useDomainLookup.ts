@@ -16,7 +16,9 @@ export function useDomainLookup() {
             if (hostname.includes('localhost') ||
                 hostname.includes('127.0.0.1') ||
                 hostname.includes('.vercel.app') ||
-                hostname === 'real-estate-lead-ai.vercel.app') {
+                hostname === 'real-estate-lead-ai.vercel.app' ||
+                hostname === 'siteo.io' ||
+                hostname === 'www.siteo.io') {
                 setIsCustomDomain(false)
                 setLoading(false)
                 return
