@@ -181,4 +181,65 @@ router.delete('/domains/:domain', verifySupabaseUser, async (req, res) => {
     }
 });
 
+// NOTIFY AGENT: POST /api/admin/notify-agent/:id
+router.post('/notify-agent/:id', verifySupabaseUser, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const db = getDb();
+        if (!db) return res.status(500).json({ error: 'Database not available' });
+
+        // 1. Fetch Agent Details
+        const { data: agent, error } = await db
+            .from('scraped_agents')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error || !agent) {
+            return res.status(404).json({ error: 'Agent not found' });
+        }
+
+        // 2. Prepare Email Data
+        // Determine live URL (Custom Domain or Subdirectory)
+        const customDomain = agent.website_config?.custom_domain;
+        const slug = agent.slug;
+
+        // Base URL from env or default
+        const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'; // Fallback for dev
+
+        // If custom domain is set and working, use it? Or just always link to the platform wrapper?
+        // Let's use the direct link logic similar to the frontend "Open Website" button
+        const websiteUrl = customDomain
+            ? `https://${customDomain}`
+            : `${CLIENT_URL}/w/${slug}`;
+
+        const adminUrl = `${CLIENT_URL}/w/${slug}/admin/login`;
+
+        // Get default password from env or constant
+        // Note: In a real app we might not send this if they've already logged in, 
+        // but for this onboarding flow we assume it's their first time.
+        const defaultPassword = process.env.DEFAULT_AGENT_PASSWORD || 'welcome123';
+
+        // 3. Send Email
+        const { sendWelcomeEmail } = await import('../services/email');
+        const result = await sendWelcomeEmail({
+            agentName: agent.full_name,
+            agentEmail: agent.primary_email || agent.raw_profile?.email, // Fallback to raw profile email
+            websiteUrl,
+            adminUrl,
+            defaultPassword
+        });
+
+        if (!result.success) {
+            return res.status(500).json({ error: result.error });
+        }
+
+        res.json({ success: true, id: result.id });
+
+    } catch (err: any) {
+        console.error('[Admin] Notify agent CRITICAL error:', err);
+        res.status(500).json({ error: err.message, stack: err.stack });
+    }
+});
+
 export const adminRoutes = router;

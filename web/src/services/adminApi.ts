@@ -176,5 +176,29 @@ export const adminApi = {
 
         if (!response.ok) throw new Error('Failed to remove domain')
         return response.json()
+    },
+
+    notifyAgent: async (id: string, token?: string) => {
+        const headers: Record<string, string> = {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+        }
+
+        const response = await fetch(`${API_BASE}/api/admin/notify-agent/${id}`, {
+            method: 'POST',
+            headers,
+        })
+
+        if (!response.ok) {
+            const text = await response.text();
+            let err: any = {};
+            try {
+                err = JSON.parse(text);
+            } catch (e) {
+                // If not JSON, use the raw text as error if short, or status text
+                err = { error: `Server Error (${response.status}): ${text.substring(0, 100)}` };
+            }
+            throw new Error(err.message || err.error || `Request failed: ${response.status} ${response.statusText}`)
+        }
+        return response.json()
     }
 }

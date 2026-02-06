@@ -52,7 +52,7 @@ export async function sendContactEmail(data: ContactFormData): Promise<{ success
 
   <!-- Header Bar -->
   <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 28px 32px; text-align:center;">
-    <p style="margin:0; color:#f59e0b; font-size:13px; text-transform:uppercase; letter-spacing:2px; font-weight:bold;">RealEstateLeadAI</p>
+    <p style="margin:0; color:#f59e0b; font-size:13px; text-transform:uppercase; letter-spacing:2px; font-weight:bold;">Siteo</p>
     <h1 style="margin:8px 0 0 0; color:#ffffff; font-size:20px; font-weight:600;">New Contact Form Submission</h1>
   </div>
 
@@ -112,7 +112,7 @@ export async function sendContactEmail(data: ContactFormData): Promise<{ success
       To respond to ${visitorName}, please use their contact details above.
     </p>
     <p style="margin:16px 0 0 0; color:#cbd5e1; font-size:11px;">
-      Sent via RealEstateLeadAI &middot; Contact Form Notification
+      Sent via Siteo &middot; Contact Form Notification
     </p>
   </div>
 
@@ -129,6 +129,110 @@ export async function sendContactEmail(data: ContactFormData): Promise<{ success
     }
 
     console.log(`[Email] Email sent successfully. ID: ${result?.id}`);
+    return { success: true, id: result?.id };
+
+  } catch (err: any) {
+    console.error('[Email] Unexpected error:', err);
+    return { success: false, error: err.message || 'Failed to send email' };
+  }
+}
+
+interface WelcomeEmailData {
+  agentName: string;
+  agentEmail: string;
+  websiteUrl: string;
+  adminUrl: string;
+  defaultPassword: string;
+}
+
+export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ success: boolean; error?: string; id?: string }> {
+  const { agentName, agentEmail, websiteUrl, adminUrl, defaultPassword } = data;
+
+  try {
+    if (!resend) {
+      console.error('[Email] Cannot send email: Resend client not initialized (missing API key).');
+      return { success: false, error: 'Email service not configured (missing API key)' };
+    }
+
+    console.log(`[Email] Sending welcome email to ${agentEmail}`);
+
+    const { data: result, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: agentEmail,
+      subject: `Your Website is Ready! - ${agentName}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0; padding:40px 20px; background:#eef2f7; font-family: Arial, sans-serif;">
+
+<div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+  <!-- Header Bar -->
+  <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 28px 32px; text-align:center;">
+    <p style="margin:0; color:#f59e0b; font-size:13px; text-transform:uppercase; letter-spacing:2px; font-weight:bold;">Siteo</p>
+    <h1 style="margin:8px 0 0 0; color:#ffffff; font-size:24px; font-weight:600;">🎉 Your Website is Live!</h1>
+  </div>
+
+  <!-- Body -->
+  <div style="padding: 28px 32px 20px;">
+
+    <p style="font-size:16px; color:#334155; line-height:1.7;">
+      Hi <strong>${agentName}</strong>,
+    </p>
+
+    <p style="font-size:15px; color:#475569; line-height:1.7;">
+      Great news! Your personalized real estate website has been created and is ready to start generating leads for you.
+    </p>
+
+    <!-- Website Link Card -->
+    <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:20px 22px; margin:24px 0;">
+      <p style="margin:0 0 10px 0; color:#166534; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">Your Website</p>
+      <a href="${websiteUrl}" style="color:#15803d; font-size:18px; font-weight:bold; text-decoration:none;">${websiteUrl}</a>
+    </div>
+
+    <p style="font-size:15px; color:#475569; line-height:1.7;">
+      You also have access to an <strong>Admin Dashboard</strong> where you can customize your site, view leads, and manage your settings:
+    </p>
+
+    <!-- Admin Link Card -->
+    <div style="background:#eff6ff; border:1px solid #93c5fd; border-radius:10px; padding:20px 22px; margin:24px 0;">
+      <p style="margin:0 0 10px 0; color:#1e40af; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">Admin Console</p>
+      <a href="${adminUrl}" style="color:#1d4ed8; font-size:16px; font-weight:bold; text-decoration:none;">${adminUrl}</a>
+      <p style="margin:12px 0 0 0; color:#64748b; font-size:13px;">
+        <strong>Default Password:</strong> <code style="background:#e2e8f0; padding:2px 8px; border-radius:4px; font-family:monospace;">${defaultPassword}</code>
+      </p>
+      <p style="margin:8px 0 0 0; color:#94a3b8; font-size:12px;">
+        Please change your password after first login.
+      </p>
+    </div>
+
+    <p style="font-size:15px; color:#475569; line-height:1.7;">
+      If you have any questions, feel free to reach out!
+    </p>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="background:#f1f5f9; border-top:1px solid #e2e8f0; padding:20px 32px; text-align:center;">
+    <p style="margin:0; color:#94a3b8; font-size:11px; line-height:1.5;">
+      Sent via Siteo &middot; Website Notification
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error('[Email] Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[Email] Welcome email sent successfully. ID: ${result?.id}`);
     return { success: true, id: result?.id };
 
   } catch (err: any) {
