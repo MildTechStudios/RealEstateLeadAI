@@ -42,13 +42,13 @@ export function AdminDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 font-sans text-slate-100 flex">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex">
             {/* Sidebar */}
-            <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col">
-                <div className="p-6 border-b border-slate-800 flex items-center gap-3">
+            <aside className="w-64 border-r border-slate-200 bg-white flex flex-col">
+                <div className="p-6 border-b border-slate-200 flex items-center gap-3">
                     {agent ? (
                         <>
-                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-teal-500/30 flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500/30 flex-shrink-0">
                                 <img
                                     src={agent.headshot_url || ''}
                                     alt={agent.full_name}
@@ -63,10 +63,10 @@ export function AdminDashboard() {
                     ) : (
                         // Loading Skeleton
                         <>
-                            <div className="w-10 h-10 bg-slate-800 rounded-full animate-pulse" />
+                            <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse" />
                             <div className="flex-1 space-y-2">
-                                <div className="h-4 bg-slate-800 rounded w-24 animate-pulse" />
-                                <div className="h-3 bg-slate-800 rounded w-16 animate-pulse" />
+                                <div className="h-4 bg-slate-200 rounded w-24 animate-pulse" />
+                                <div className="h-3 bg-slate-200 rounded w-16 animate-pulse" />
                             </div>
                         </>
                     )}
@@ -75,28 +75,28 @@ export function AdminDashboard() {
                 <nav className="flex-1 p-4 space-y-2">
                     <button
                         onClick={() => setActiveTab('overview')}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'overview' ? 'bg-teal-500/10 text-teal-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'overview' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
                     >
                         <LayoutDashboard className="w-5 h-5" />
                         Overview
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition-colors">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-100 hover:text-slate-900 rounded-xl font-medium transition-colors">
                         <BarChart className="w-5 h-5" />
                         Analytics
                     </button>
                     <button
                         onClick={() => setActiveTab('settings')}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'settings' ? 'bg-teal-500/10 text-teal-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
                     >
                         <Settings className="w-5 h-5" />
                         Settings
                     </button>
                 </nav>
 
-                <div className="p-4 border-t border-slate-800">
+                <div className="p-4 border-t border-slate-200">
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-red-500/10 hover:text-red-400 rounded-xl font-medium transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-xl font-medium transition-colors"
                     >
                         <LogOut className="w-5 h-5" />
                         Sign Out
@@ -107,12 +107,12 @@ export function AdminDashboard() {
             {/* Main Content */}
             <main className="flex-1 flex flex-col">
                 {/* Header */}
-                <header className="h-20 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between px-8">
-                    <h1 className="text-xl font-semibold text-white">Dashboard</h1>
+                <header className="h-20 border-b border-slate-200 bg-white flex items-center justify-between px-8">
+                    <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
 
                     <button
                         onClick={handleLaunchEditor}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-lg transition-all shadow-lg shadow-teal-500/20"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-all shadow-lg shadow-indigo-600/20"
                     >
                         <Zap className="w-4 h-4" />
                         Open Visual Editor
@@ -127,17 +127,17 @@ export function AdminDashboard() {
                             <>
                                 {/* Summary Cards */}
                                 <div className="grid grid-cols-3 gap-6">
-                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                                        <h3 className="text-slate-400 text-sm font-medium mb-2">Total Views</h3>
-                                        <p className="text-3xl font-bold text-white">1,240</p>
+                                    <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                                        <h3 className="text-slate-500 text-sm font-medium mb-2">Total Views</h3>
+                                        <p className="text-3xl font-bold text-slate-900">1,240</p>
                                     </div>
-                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                                        <h3 className="text-slate-400 text-sm font-medium mb-2">Leads Captured</h3>
-                                        <p className="text-3xl font-bold text-teal-400">12</p>
+                                    <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                                        <h3 className="text-slate-500 text-sm font-medium mb-2">Leads Captured</h3>
+                                        <p className="text-3xl font-bold text-indigo-600">12</p>
                                     </div>
-                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                                        <h3 className="text-slate-400 text-sm font-medium mb-2">Avg. Time</h3>
-                                        <p className="text-3xl font-bold text-white">2m 15s</p>
+                                    <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                                        <h3 className="text-slate-500 text-sm font-medium mb-2">Avg. Time</h3>
+                                        <p className="text-3xl font-bold text-slate-900">2m 15s</p>
                                     </div>
                                 </div>
 
@@ -151,7 +151,7 @@ export function AdminDashboard() {
                                                 token={localStorage.getItem(`admin_token_${slug}`) || ''}
                                             />
                                         ) : (
-                                            <div className="p-12 text-center bg-slate-900 rounded-2xl border border-slate-800 text-slate-500">
+                                            <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 shadow-sm">
                                                 Loading Domain Settings...
                                             </div>
                                         )}
@@ -161,8 +161,8 @@ export function AdminDashboard() {
                         )}
 
                         {activeTab === 'settings' && (
-                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-                                <h2 className="text-xl font-bold text-white mb-6">Security Settings</h2>
+                            <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+                                <h2 className="text-xl font-bold text-slate-900 mb-6">Security Settings</h2>
 
                                 <div className="max-w-md">
                                     <ChangePasswordForm slug={slug || ''} />
@@ -171,12 +171,12 @@ export function AdminDashboard() {
                         )}
 
                         {activeTab === 'overview' && (
-                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
-                                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-sm">
+                                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <LayoutDashboard className="w-8 h-8 text-slate-500" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-white mb-2">Welcome to your Dashboard</h2>
-                                <p className="text-slate-400 max-w-lg mx-auto">
+                                <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome to your Dashboard</h2>
+                                <p className="text-slate-500 max-w-lg mx-auto">
                                     This is where you'll manage your leads, analytics, and website settings.
                                     Use the "Open Visual Editor" button above to customize your public website.
                                 </p>
@@ -227,22 +227,22 @@ function ChangePasswordForm({ slug }: { slug: string }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">New Password</label>
+                <label className="block text-sm font-medium text-slate-600 mb-1">New Password</label>
                 <input
                     type="password"
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none focus:border-teal-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-all"
                     placeholder="Enter new password"
                 />
             </div>
             <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Confirm Password</label>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Confirm Password</label>
                 <input
                     type="password"
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none focus:border-teal-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-all"
                     placeholder="Confirm new password"
                 />
             </div>
@@ -256,7 +256,7 @@ function ChangePasswordForm({ slug }: { slug: string }) {
             <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="px-4 py-2 bg-teal-500 text-slate-900 font-bold rounded-lg hover:bg-teal-400 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-500 transition-colors disabled:opacity-50"
             >
                 {status === 'loading' ? 'Updating...' : 'Update Password'}
             </button>

@@ -74,7 +74,7 @@ export function VisualEditorToolbar({
                     onClick={() => setMinimized(false)}
                     className="bg-slate-900/90 backdrop-blur-md text-white p-4 rounded-full shadow-2xl hover:bg-slate-800 transition-all border border-slate-700/50 group"
                 >
-                    <Sparkles className="w-6 h-6 text-teal-400 group-hover:rotate-12 transition-transform" />
+                    <Sparkles className="w-6 h-6 text-indigo-400 group-hover:rotate-12 transition-transform" />
                 </button>
             </motion.div>
         )
@@ -109,7 +109,7 @@ export function VisualEditorToolbar({
                 <button
                     onClick={() => setActiveTab('contact')}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'contact'
-                        ? 'bg-slate-800 text-teal-400 shadow-sm'
+                        ? 'bg-slate-800 text-indigo-400 shadow-sm'
                         : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
                         }`}
                 >
@@ -178,7 +178,7 @@ export function VisualEditorToolbar({
                                                 });
                                             }}
                                             className={`group relative flex items-center justify-between p-3 rounded-xl border transition-all ${isActive
-                                                ? 'bg-slate-800 border-teal-500 shadow-lg shadow-teal-500/10'
+                                                ? 'bg-slate-800 border-indigo-500 shadow-lg shadow-indigo-500/10'
                                                 : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:bg-slate-800/50'
                                                 }`}
                                         >
@@ -253,7 +253,7 @@ export function VisualEditorToolbar({
                                     <input
                                         value={getVal('headshotUrl', 'headshot_url')}
                                         onChange={e => onUpdateConfig('headshotUrl', e.target.value)}
-                                        className="flex-1 bg-slate-950 text-slate-500 text-xs rounded-xl px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none w-0"
+                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                         placeholder="or paste URL..."
                                     />
                                 </div>
@@ -295,7 +295,7 @@ export function VisualEditorToolbar({
                                     <input
                                         value={getVal('logoUrl', 'logo_url')}
                                         onChange={e => onUpdateConfig('logoUrl', e.target.value)}
-                                        className="flex-1 bg-slate-950 text-slate-500 text-xs rounded-xl px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none w-0"
+                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                         placeholder="or paste URL..."
                                     />
                                 </div>
@@ -312,7 +312,7 @@ export function VisualEditorToolbar({
                                     type="text"
                                     value={getVal('contactPhone', 'primary_phone')}
                                     onChange={e => onUpdateConfig('contactPhone', e.target.value)}
-                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -321,7 +321,7 @@ export function VisualEditorToolbar({
                                     type="text"
                                     value={getVal('officePhone', 'office_phone')}
                                     onChange={e => onUpdateConfig('officePhone', e.target.value)}
-                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                 />
                             </div>
                             <div className="col-span-2 space-y-1">
@@ -330,7 +330,7 @@ export function VisualEditorToolbar({
                                     type="text"
                                     value={getVal('contactEmail', 'primary_email')}
                                     onChange={e => onUpdateConfig('contactEmail', e.target.value)}
-                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                 />
                             </div>
                             <div className="col-span-2 space-y-1">
@@ -339,7 +339,7 @@ export function VisualEditorToolbar({
                                     type="text"
                                     value={getVal('licenseNumber', 'license_number')}
                                     onChange={e => onUpdateConfig('licenseNumber', e.target.value)}
-                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                 />
                             </div>
                             <div className="col-span-2 space-y-1">
@@ -347,7 +347,7 @@ export function VisualEditorToolbar({
                                 <textarea
                                     value={getVal('contactAddress', 'office_address')}
                                     onChange={e => onUpdateConfig('contactAddress', e.target.value)}
-                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none min-h-[60px]"
+                                    className="w-full bg-slate-950 text-white text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none min-h-[60px]"
                                 />
                             </div>
                         </div>
@@ -365,7 +365,7 @@ export function VisualEditorToolbar({
                                         placeholder="LinkedIn URL"
                                         value={getVal('linkedinUrl', 'linkedin_url')}
                                         onChange={e => onUpdateConfig('linkedinUrl', e.target.value)}
-                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -374,7 +374,7 @@ export function VisualEditorToolbar({
                                         placeholder="Facebook URL"
                                         value={getVal('facebookUrl', 'facebook_url')}
                                         onChange={e => onUpdateConfig('facebookUrl', e.target.value)}
-                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -383,7 +383,7 @@ export function VisualEditorToolbar({
                                         placeholder="Instagram URL"
                                         value={getVal('instagramUrl', 'instagram_url')}
                                         onChange={e => onUpdateConfig('instagramUrl', e.target.value)}
-                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -392,7 +392,7 @@ export function VisualEditorToolbar({
                                         placeholder="Twitter/X URL"
                                         value={getVal('twitterUrl', 'twitter_url')}
                                         onChange={e => onUpdateConfig('twitterUrl', e.target.value)}
-                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -401,7 +401,7 @@ export function VisualEditorToolbar({
                                         placeholder="YouTube URL"
                                         value={getVal('youtubeUrl', 'youtube_url')}
                                         onChange={e => onUpdateConfig('youtubeUrl', e.target.value)}
-                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-teal-500 outline-none"
+                                        className="flex-1 bg-slate-950 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none"
                                     />
                                 </div>
                             </div>
@@ -442,7 +442,7 @@ export function VisualEditorToolbar({
                     onClick={onSave}
                     disabled={!isDirty || saving}
                     className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition-all ${isDirty
-                        ? 'bg-teal-500 text-slate-900 hover:bg-teal-400 shadow-lg shadow-teal-500/20 transform hover:scale-[1.02]'
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 transform hover:scale-[1.02]'
                         : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                         }`}
                 >

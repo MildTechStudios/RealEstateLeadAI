@@ -74,7 +74,7 @@ function App() {
   }, [])
 
   if (checkingAuth) {
-    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-teal-500">Loading...</div>
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-indigo-500">Loading...</div>
   }
 
   if (!session) {
@@ -132,7 +132,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen text-slate-100 font-sans selection:bg-teal-500/30 relative">
+    <div className="min-h-screen text-slate-100 font-sans selection:bg-indigo-500/30 relative">
       <Background />
 
       <div className="relative z-10">
@@ -178,9 +178,9 @@ function App() {
               {loading && !profile && (
                 <div className="flex flex-col items-center justify-center py-12">
                   <div className="relative">
-                    <div className="w-16 h-16 border-4 border-slate-700/50 border-t-teal-500 rounded-full animate-spin"></div>
+                    <div className="w-16 h-16 border-4 border-slate-700/50 border-t-indigo-500 rounded-full animate-spin"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-bold text-teal-500">CB</span>
+                      <span className="text-xs font-bold text-indigo-500">CB</span>
                     </div>
                   </div>
                   <p className="mt-4 text-slate-400 font-medium animate-pulse">Analyzing Agent Profile...</p>
@@ -193,7 +193,7 @@ function App() {
                 <div className="animate-in zoom-in-95 duration-300">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                      <span className="w-2 h-8 bg-teal-500 rounded-full shadow-[0_0_15px_rgba(20,184,166,0.5)]"></span>
+                      <span className="w-2 h-8 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></span>
                       Extracted Profile
                     </h2>
                     <button

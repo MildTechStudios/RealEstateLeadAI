@@ -18,7 +18,7 @@ export function Background() {
                     repeat: Infinity,
                     ease: "easeInOut"
                 }}
-                className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-teal-500/20 rounded-full blur-[120px]"
+                className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-indigo-500/20 rounded-full blur-[120px]"
             />
 
             {/* Glowing Orb 2 (Purple/Accent) */}

@@ -106,7 +106,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-white/10">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-full bg-slate-800 overflow-hidden border-2 border-teal-500/30">
+                            <div className="w-14 h-14 rounded-full bg-slate-800 overflow-hidden border-2 border-indigo-500/30">
                                 {lead.headshot_url ? (
                                     <img src={lead.headshot_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
@@ -140,7 +140,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                             {!isEditing && activeTab === 'profile' ? (
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-teal-500/20 text-teal-400 rounded-lg hover:bg-teal-500/30 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 text-indigo-400 rounded-lg hover:bg-indigo-500/30 transition-colors"
                                 >
                                     <Edit2 className="w-4 h-4" />
                                     Edit
@@ -157,7 +157,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                                     <button
                                         onClick={handleSave}
                                         disabled={isSaving}
-                                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50"
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors disabled:opacity-50"
                                     >
                                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                         Save
@@ -229,7 +229,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                                             value={formData.bio}
                                             onChange={handleChange}
                                             rows={4}
-                                            className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-none"
+                                            className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"
                                             placeholder="Agent bio..."
                                         />
                                     ) : (
@@ -257,7 +257,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                                         href={lead.source_url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 text-sm transition-colors"
+                                        className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm transition-colors"
                                     >
                                         <ExternalLink className="w-4 h-4" />
                                         View Original Profile
@@ -305,7 +305,7 @@ function FieldRow({ icon: Icon, label, name, value, onChange, isEditing, type = 
                     name={name}
                     value={value}
                     onChange={onChange}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                    className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                     placeholder={`Enter ${label.toLowerCase()}...`}
                 />
             ) : (

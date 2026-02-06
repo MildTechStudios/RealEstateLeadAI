@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
-import { Mail, Phone, MapPin, Linkedin, Facebook, Instagram, Twitter, Youtube, TrendingUp, ArrowDown, Home, BarChart2, Building, BadgeCheck, Minus } from 'lucide-react'
+import { Mail, Phone, MapPin, Linkedin, Facebook, Instagram, Twitter, Youtube, TrendingUp, ArrowDown, Home, BarChart2, Building, BadgeCheck, Minus, Sparkles } from 'lucide-react'
 import { getWebsiteBySlug, type DBProfile } from '../services/api'
 import { getThemeConfig } from '../utils/theme'
 import { FloatingNavbar } from '../components/website/FloatingNavbar'
@@ -156,12 +156,13 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
 
     // Save Handler
     const handleSave = async () => {
-        if (!slug || !isDirty) return
+        if (!slug || !isDirty || !agent) return
         setIsSaving(true)
         try {
             const token = localStorage.getItem(`admin_token_${slug}`)
             if (token) {
-                await adminApi.updateConfig(token, localConfig)
+                // Fix: pass agent.id as first arg, config as second, token as third
+                await adminApi.updateConfig(agent.id, localConfig, token)
                 setSavedConfig(localConfig) // Update reference state
             }
         } catch (err) {
@@ -208,6 +209,11 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
                 <h1 className="text-4xl font-bold mb-4">Website Not Found</h1>
                 <p className="text-slate-400">This agent website doesn't exist or isn't published yet.</p>
+                <div className="mt-8 p-4 bg-slate-900 rounded-lg border border-slate-800 text-left max-w-md w-full">
+                    <p className="text-xs text-slate-500 uppercase font-bold mb-2">Debug Info</p>
+                    <p className="text-sm text-red-400 font-mono break-all">Error: {error}</p>
+                    <p className="text-sm text-slate-400 font-mono mt-1">Slug: {slug}</p>
+                </div>
             </div>
         )
     }
@@ -1072,7 +1078,15 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
                         <div className="flex items-center gap-6">
                             <img src="/assets/Fair-Housing-Logo-PNG-Images-HD.png" alt="Equal Housing Opportunity" className="h-12 opacity-80" />
                         </div>
-                        <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} {agent.full_name}. All rights reserved.</p>
+                        <div className="flex flex-col items-center md:items-end gap-2">
+                            <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} {agent.full_name}. All rights reserved.</p>
+                            <a href="/" className="flex items-center gap-1.5 text-xs text-slate-700 hover:text-indigo-400 transition-colors opacity-80 hover:opacity-100">
+                                <span>Made by</span>
+                                <span className="font-bold flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3 text-indigo-500" /> Siteo
+                                </span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </footer>

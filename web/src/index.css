@@ -19,9 +19,9 @@
   --glass-shine: rgba(255, 255, 255, 0.4);
 
   /* Brand Colors */
-  --primary: #14b8a6;
-  /* Teal 500 */
-  --primary-glow: rgba(20, 184, 166, 0.25);
+  --primary: #6366f1;
+  /* Indigo 500 */
+  --primary-glow: rgba(99, 102, 241, 0.25);
 
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color-scheme: light;

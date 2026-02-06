@@ -209,21 +209,21 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
         // If we have an initial domain but no status yet, we are probably loading checkStatus
         if (initialDomain && verifying) {
             return (
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 flex justify-center py-12 shadow-sm">
+                    <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
                 </div>
             )
         }
 
         return (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-teal-500/10 rounded-lg flex items-center justify-center">
-                        <Globe className="w-5 h-5 text-teal-400" />
+                    <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
+                        <Globe className="w-5 h-5 text-indigo-400" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-white">Connect Custom Domain</h3>
-                        <p className="text-sm text-slate-400">Use your own domain (e.g. yourname.com)</p>
+                        <h3 className="font-semibold text-slate-900">Connect Custom Domain</h3>
+                        <p className="text-sm text-slate-500">Use your own domain (e.g. yourname.com)</p>
                     </div>
                 </div>
 
@@ -233,12 +233,12 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                         placeholder="example.com"
                         value={domain}
                         onChange={(e) => setDomain(e.target.value)}
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white outline-none focus:border-teal-500 transition-colors"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                     />
                     <button
                         type="submit"
                         disabled={loading}
-                        className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-lg transition-colors disabled:opacity-50"
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
                     >
                         {loading ? 'Adding...' : 'Connect'}
                     </button>
@@ -268,27 +268,27 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
     const dnsValue = isSubdomain ? 'cname.vercel-dns.com' : '76.76.21.21'
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'}`}>
-                        <Globe className={`w-5 h-5 ${isVerified ? 'text-green-400' : 'text-yellow-400'}`} />
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isVerified ? 'bg-green-100' : 'bg-amber-100'}`}>
+                        <Globe className={`w-5 h-5 ${isVerified ? 'text-green-600' : 'text-amber-600'}`} />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-white flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                             {currentDomain}
                             {isVerified ? (
-                                <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30">Active</span>
+                                <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200">Active</span>
                             ) : (
-                                <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-500/30">Pending DNS</span>
+                                <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">Pending DNS</span>
                             )}
                         </h3>
-                        <p className="text-sm text-slate-400">Custom Domain Configuration</p>
+                        <p className="text-sm text-slate-500">Custom Domain Configuration</p>
                     </div>
                 </div>
                 <button
                     onClick={handleRemove}
-                    className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+                    className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
                 >
                     <X className="w-4 h-4" />
                 </button>
@@ -296,34 +296,34 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
 
             {/* Ownership Verification (TXT Record) */}
             {status?.verification?.some((v: any) => v.reason === 'pending_domain_verification') && (
-                <div className="mb-6 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                <div className="mb-6 bg-blue-50 border border-blue-100 rounded-xl p-4">
                     <div className="flex items-start gap-3">
-                        <div className="p-2 bg-blue-500/20 rounded-lg">
-                            <AlertTriangle className="w-5 h-5 text-blue-400" />
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                            <AlertTriangle className="w-5 h-5 text-blue-600" />
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-semibold text-white text-sm mb-1">Prove Domain Ownership</h4>
-                            <p className="text-xs text-blue-200 mb-3">
+                            <h4 className="font-semibold text-slate-900 text-sm mb-1">Prove Domain Ownership</h4>
+                            <p className="text-xs text-blue-700 mb-3">
                                 This domain was used by another Vercel project properly. Please add this <b>TXT Record</b> to prove you own it:
                             </p>
 
                             {status.verification
                                 .filter((v: any) => v.reason === 'pending_domain_verification')
                                 .map((v: any, i: number) => (
-                                    <div key={i} className="flex items-center gap-4 bg-slate-900 rounded-lg p-3 border border-slate-800">
+                                    <div key={i} className="flex items-center gap-4 bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                                         <div className="flex-1">
                                             <span className="text-[10px] text-slate-500 block uppercase tracking-wider mb-1">Type</span>
-                                            <span className="text-white font-mono font-bold text-sm">TXT</span>
+                                            <span className="text-slate-900 font-mono font-bold text-sm">TXT</span>
                                         </div>
                                         <div className="flex-[2]">
                                             <span className="text-[10px] text-slate-500 block uppercase tracking-wider mb-1">Name</span>
-                                            <span className="text-white font-mono font-bold text-sm break-all select-all">
+                                            <span className="text-slate-900 font-mono font-bold text-sm break-all select-all">
                                                 {v.domain.replace(`.${currentDomain}`, '') || '@'}
                                             </span>
                                         </div>
                                         <div className="flex-[3]">
                                             <span className="text-[10px] text-slate-500 block uppercase tracking-wider mb-1">Value</span>
-                                            <span className="text-white font-mono font-bold text-sm break-all select-all cursor-pointer" title={v.value}>{v.value}</span>
+                                            <span className="text-slate-900 font-mono font-bold text-sm break-all select-all cursor-pointer" title={v.value}>{v.value}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -333,14 +333,14 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
             )}
 
             {!isVerified && !status?.verification?.some((v: any) => v.reason === 'pending_domain_verification') && (
-                <div className="mb-6 bg-slate-950 border border-slate-800 rounded-xl p-4">
+                <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
 
                     {/* Detailed Verification Status */}
                     {status?.verification && status.verification.length > 0 && (
-                        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                            <h5 className="text-red-400 font-semibold text-xs uppercase tracking-wide mb-1">Verification Status</h5>
+                        <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg">
+                            <h5 className="text-red-600 font-semibold text-xs uppercase tracking-wide mb-1">Verification Status</h5>
                             {status.verification.map((v: any, i: number) => (
-                                <p key={i} className="text-red-300 text-sm">
+                                <p key={i} className="text-red-500 text-sm">
                                     {v.reason === 'missing_config' && `We can't see the ${v.type.toUpperCase()} record yet.`}
                                     {v.reason === 'conflicting_nameservers' && 'You have conflicting Nameservers set.'}
                                     {v.reason === 'pending_propagation' && 'DNS is updating (propagation)...'}
@@ -351,25 +351,25 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                     )}
 
                     <div className="flex items-start gap-3">
-                        <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                         <div>
-                            <h4 className="font-medium text-white text-sm mb-1">DNS Configuration Required</h4>
-                            <p className="text-xs text-slate-400 mb-3">
+                            <h4 className="font-medium text-slate-900 text-sm mb-1">DNS Configuration Required</h4>
+                            <p className="text-xs text-slate-500 mb-3">
                                 Log in to your domain provider and add the following <b>{dnsType} Record</b>:
                             </p>
 
-                            <div className="flex items-center gap-4 bg-slate-900 rounded-lg p-3 border border-slate-800">
+                            <div className="flex items-center gap-4 bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                                 <div className="flex-1">
                                     <span className="text-xs text-slate-500 block uppercase tracking-wider mb-1">Type</span>
-                                    <span className="text-white font-mono font-bold">{dnsType}</span>
+                                    <span className="text-slate-900 font-mono font-bold">{dnsType}</span>
                                 </div>
                                 <div className="flex-1">
                                     <span className="text-xs text-slate-500 block uppercase tracking-wider mb-1">Name</span>
-                                    <span className="text-white font-mono font-bold">{dnsName}</span>
+                                    <span className="text-slate-900 font-mono font-bold">{dnsName}</span>
                                 </div>
                                 <div className="flex-1">
                                     <span className="text-xs text-slate-500 block uppercase tracking-wider mb-1">Value</span>
-                                    <span className="text-white font-mono font-bold select-all cursor-pointer truncate" title={dnsValue}>{dnsValue}</span>
+                                    <span className="text-slate-900 font-mono font-bold select-all cursor-pointer truncate" title={dnsValue}>{dnsValue}</span>
                                 </div>
                             </div>
                         </div>
@@ -386,8 +386,8 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
                     onClick={isVerified ? () => checkStatus(domain || status.name) : handleVerify}
                     disabled={verifying}
                     className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isVerified
-                        ? 'bg-slate-800 hover:bg-slate-700 text-white'
-                        : 'bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold shadow-lg shadow-teal-500/20'
+                        ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        : 'bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-600/20'
                         }`}
                 >
                     {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
@@ -396,12 +396,12 @@ export function DomainManager({ agentId, initialDomain, token }: DomainManagerPr
             </div>
 
             {error && (
-                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
-                    <div className="text-red-400 text-xs font-mono break-all">
+                <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-center">
+                    <div className="text-red-500 text-xs font-mono break-all">
                         {typeof error === 'object' ? (
                             <>
                                 <p className="font-bold">{(error as any).message || JSON.stringify(error)}</p>
-                                {(error as any).solution && <p className="mt-1 text-slate-400">{(error as any).solution}</p>}
+                                {(error as any).solution && <p className="mt-1 text-slate-500">{(error as any).solution}</p>}
                             </>
                         ) : error}
                     </div>

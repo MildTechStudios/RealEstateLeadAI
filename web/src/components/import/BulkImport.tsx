@@ -137,7 +137,7 @@ export function BulkImport() {
                     <div className="mt-4">
                         <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                             <motion.div
-                                className="h-full bg-gradient-to-r from-purple-600 to-teal-500"
+                                className="h-full bg-gradient-to-r from-purple-600 to-indigo-500"
                                 initial={{ width: 0 }}
                                 animate={{ width: `${((currentIndex + 1) / urls.length) * 100}%` }}
                                 transition={{ duration: 0.3 }}

@@ -15,22 +15,22 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
     return (
         <div className="relative group">
             {/* Glow Effect - Adjusted for Light Card */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
 
             <div className="relative bg-white/95 backdrop-blur-xl border border-white/40 rounded-2xl overflow-hidden shadow-xl text-slate-900">
                 {/* Success Banner */}
-                <div className="bg-teal-50 border-b border-teal-100 p-4 flex items-center justify-between">
+                <div className="bg-indigo-50 border-b border-indigo-100 p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="bg-teal-100 p-1.5 rounded-full">
-                            <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="bg-indigo-100 p-1.5 rounded-full">
+                            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <span className="text-teal-700 font-medium tracking-wide text-sm">Extraction Successful</span>
+                        <span className="text-indigo-700 font-medium tracking-wide text-sm">Extraction Successful</span>
                     </div>
                     {profile.saved_to_db && (
-                        <div className="flex items-center gap-2 bg-teal-100 px-3 py-1 rounded-full border border-teal-200 shadow-sm">
-                            <span className="text-xs text-teal-700 font-medium">Auto-Saved</span>
+                        <div className="flex items-center gap-2 bg-indigo-100 px-3 py-1 rounded-full border border-indigo-200 shadow-sm">
+                            <span className="text-xs text-indigo-700 font-medium">Auto-Saved</span>
                         </div>
                     )}
                 </div>
@@ -41,7 +41,7 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                         <div className="flex flex-col gap-4 flex-shrink-0 items-center md:items-start">
                             {profile.headshot_url ? (
                                 <div className="relative group/image">
-                                    <div className="absolute inset-0 bg-teal-500/20 rounded-2xl blur-md opacity-0 group-hover/image:opacity-100 transition duration-500"></div>
+                                    <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-md opacity-0 group-hover/image:opacity-100 transition duration-500"></div>
                                     <img
                                         src={profile.headshot_url}
                                         alt={profile.full_name}
@@ -74,7 +74,7 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                             <div className="space-y-1 text-center md:text-left">
                                 <h3 className="text-3xl font-bold text-slate-900 tracking-tight">{profile.full_name}</h3>
                                 {profile.office_name && (
-                                    <p className="text-teal-600 font-medium">{profile.office_name}</p>
+                                    <p className="text-indigo-600 font-medium">{profile.office_name}</p>
                                 )}
                             </div>
 
@@ -96,7 +96,7 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                                     <label className="text-xs text-slate-500 uppercase tracking-widest font-semibold block mb-1">Address</label>
                                     <p className="text-slate-900 font-medium text-sm truncate">{profile.office_address || '—'}</p>
                                 </div>
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-teal-200 hover:shadow-sm transition-all">
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-indigo-200 hover:shadow-sm transition-all">
                                     <label className="text-xs text-slate-500 uppercase tracking-widest font-semibold block mb-1">License</label>
                                     <p className="text-slate-900 font-mono text-sm">{profile.license_number || '—'}</p>
                                 </div>
@@ -133,7 +133,7 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                                 {/* Bio */}
                                 {profile.bio && (
                                     <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                        <label className="text-xs text-teal-600 uppercase tracking-widest font-semibold block mb-2">About Agent</label>
+                                        <label className="text-xs text-indigo-600 uppercase tracking-widest font-semibold block mb-2">About Agent</label>
                                         <p className="text-slate-600 text-sm leading-relaxed max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                             {profile.bio}
                                         </p>
@@ -148,7 +148,7 @@ export function AgentCard({ profile, state, onSave, onCancel }: AgentCardProps) 
                         <button
                             onClick={onSave}
                             disabled={state === 'saving' || state === 'saved'}
-                            className="flex-1 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-teal-500/25 flex items-center justify-center gap-2"
+                            className="flex-1 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold rounded-xl hover:from-indigo-600 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2"
                         >
                             {state === 'saving' ? 'Saving...' : state === 'saved' ? 'Saved Successfully' : 'Save to Leads'}
                         </button>

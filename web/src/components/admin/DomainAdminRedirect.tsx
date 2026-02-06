@@ -7,7 +7,7 @@ export function DomainAdminRedirect() {
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-                <div className="w-10 h-10 border-2 border-slate-800 border-t-teal-500 rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-2 border-slate-800 border-t-indigo-500 rounded-full animate-spin"></div>
             </div>
         )
     }

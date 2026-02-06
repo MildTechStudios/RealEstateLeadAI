@@ -14,7 +14,7 @@ export function Tabs({ views, currentView, onChange }: TabProps) {
                     className={`
                         px-4 py-2 rounded-md text-sm font-medium transition-all
                         ${currentView === view.id
-                            ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+                            ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg'
                             : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                         }
                     `}

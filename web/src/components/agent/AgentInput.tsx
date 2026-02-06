@@ -14,7 +14,7 @@ export function AgentInput({ url, onUrlChange, onSubmit, isLoading, buttonText }
     return (
         <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 mb-6">
             <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
                 Import Agent Profile
@@ -30,12 +30,12 @@ export function AgentInput({ url, onUrlChange, onSubmit, isLoading, buttonText }
                     onChange={(e) => onUrlChange(e.target.value)}
                     placeholder="https://www.coldwellbanker.com/.../agents/..."
                     disabled={isLoading}
-                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50"
+                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50"
                 />
                 <button
                     onClick={onSubmit}
                     disabled={isLoading || !url.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-lg hover:from-teal-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                    className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-medium rounded-lg hover:from-indigo-600 hover:to-violet-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                 >
                     {isLoading ? (
                         <>

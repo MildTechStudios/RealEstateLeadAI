@@ -49,16 +49,16 @@ export function ContentEditor() {
         setConfig((prev: any) => ({ ...prev, [key]: value }))
     }
 
-    if (loading) return <div className="p-8 text-slate-400">Loading editor...</div>
+    if (loading) return <div className="p-8 text-slate-500">Loading editor...</div>
 
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-white">Content & Bio</h1>
+                <h1 className="text-2xl font-bold text-slate-900">Content & Bio</h1>
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-2 bg-teal-500 text-slate-900 font-bold rounded-full hover:bg-teal-400 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-500 transition-colors disabled:opacity-50"
                 >
                     {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Save Changes
@@ -66,7 +66,7 @@ export function ContentEditor() {
             </div>
 
             {message && (
-                <div className={`p-4 rounded-xl ${message.includes('Failed') ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                <div className={`p-4 rounded-xl border ${message.includes('Failed') ? 'bg-red-50 border-red-100 text-red-600' : 'bg-green-50 border-green-100 text-green-600'}`}>
                     {message}
                 </div>
             )}
@@ -74,51 +74,51 @@ export function ContentEditor() {
             <div className="space-y-6">
                 {/* Custom Title */}
                 <div className="space-y-2">
-                    <label className="text-slate-300 text-sm font-medium">Custom Hero Title</label>
+                    <label className="text-slate-700 text-sm font-medium">Custom Hero Title</label>
                     <input
                         type="text"
                         value={config.customTitle || ''}
                         onChange={(e) => handleChange('customTitle', e.target.value)}
                         placeholder="e.g. Your Dream Home Awaits"
-                        className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-colors"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 focus:bg-white transition-all"
                     />
                     <p className="text-xs text-slate-500">Overrides the default "Luxury Real Estate in [City]" title.</p>
                 </div>
 
                 {/* Custom Bio Headline */}
                 <div className="space-y-2">
-                    <label className="text-slate-300 text-sm font-medium">Bio Headline</label>
+                    <label className="text-slate-700 text-sm font-medium">Bio Headline</label>
                     <input
                         type="text"
                         value={config.bioHeadline || ''}
                         onChange={(e) => handleChange('bioHeadline', e.target.value)}
                         placeholder="e.g. About Me"
-                        className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-colors"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 focus:bg-white transition-all"
                     />
                 </div>
 
                 {/* Custom Bio Text */}
                 <div className="space-y-2">
-                    <label className="text-slate-300 text-sm font-medium">Custom Bio</label>
+                    <label className="text-slate-700 text-sm font-medium">Custom Bio</label>
                     <textarea
                         value={config.customBio || ''}
                         onChange={(e) => handleChange('customBio', e.target.value)}
                         rows={8}
                         placeholder="Write a custom bio here to override the scraped one..."
-                        className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-colors resize-y"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 focus:bg-white transition-all resize-y"
                     />
                     <p className="text-xs text-slate-500">Leave empty to use the original scraped bio.</p>
                 </div>
 
                 {/* Custom Headshot URL */}
-                <div className="space-y-2 pt-4 border-t border-slate-800">
-                    <label className="text-slate-300 text-sm font-medium">Profile Image URL</label>
+                <div className="space-y-2 pt-4 border-t border-slate-200">
+                    <label className="text-slate-700 text-sm font-medium">Profile Image URL</label>
                     <input
                         type="text"
                         value={config.customHeadshotUrl || ''}
                         onChange={(e) => handleChange('customHeadshotUrl', e.target.value)}
                         placeholder="https://..."
-                        className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-colors"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 focus:bg-white transition-all"
                     />
                     <p className="text-xs text-slate-500">Paste a link to a new headshot to override the default one.</p>
                 </div>
