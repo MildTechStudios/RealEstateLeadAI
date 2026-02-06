@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
-import { Mail, Phone, MapPin, Linkedin, Facebook, Instagram, Twitter, Youtube, TrendingUp, ArrowDown, Home, BarChart2, Building, BadgeCheck, Minus, Sparkles } from 'lucide-react'
+import { Mail, Phone, MapPin, Linkedin, Facebook, Instagram, Twitter, Youtube, TrendingUp, ArrowDown, Home, BarChart2, Building, BadgeCheck, Minus } from 'lucide-react'
 import { getWebsiteBySlug, type DBProfile } from '../services/api'
 import { getThemeConfig } from '../utils/theme'
 import { FloatingNavbar } from '../components/website/FloatingNavbar'
@@ -73,7 +73,7 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
                         ctx.fillText(initials, 16, 17)
 
                         // Update Link Tag
-                        const link = document.querySelector("link[rel*='icon']") || document.createElement('link')
+                        const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement) || document.createElement('link')
                         link.type = 'image/png'
                         link.rel = 'icon'
                         link.href = canvas.toDataURL()
