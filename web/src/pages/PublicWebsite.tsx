@@ -48,6 +48,39 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
                 const data = await getWebsiteBySlug(slug)
                 setAgent(data)
 
+                // Dynamic Title & Favicon
+                if (data.full_name) {
+                    document.title = data.full_name
+
+                    // Generate Favicon
+                    const canvas = document.createElement('canvas')
+                    canvas.width = 32
+                    canvas.height = 32
+                    const ctx = canvas.getContext('2d')
+                    if (ctx) {
+                        // Background
+                        ctx.fillStyle = '#6366f1' // Indigo-500
+                        ctx.beginPath()
+                        ctx.arc(16, 16, 16, 0, 2 * Math.PI)
+                        ctx.fill()
+
+                        // Initials
+                        ctx.fillStyle = 'white'
+                        ctx.font = 'bold 14px Inter, sans-serif'
+                        ctx.textAlign = 'center'
+                        ctx.textBaseline = 'middle'
+                        const initials = data.full_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+                        ctx.fillText(initials, 16, 17)
+
+                        // Update Link Tag
+                        const link = document.querySelector("link[rel*='icon']") || document.createElement('link')
+                        link.type = 'image/png'
+                        link.rel = 'icon'
+                        link.href = canvas.toDataURL()
+                        document.getElementsByTagName('head')[0].appendChild(link)
+                    }
+                }
+
                 const defaultTestimonials = [
                     { quote: `${data.full_name.split(' ')[0]} was incredible to work with. The attention to detail and market knowledge made selling our home effortless.`, name: "James Peterson", location: "Dallas, TX", initials: "JP" },
                     { quote: `We found our dream home thanks to ${data.full_name}'s persistence and dedication. Highly recommended!`, name: "Sarah Mitchell", location: "Frisco, TX", initials: "SM" },
@@ -1080,11 +1113,9 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
                         </div>
                         <div className="flex flex-col items-center md:items-end gap-2">
                             <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} {agent.full_name}. All rights reserved.</p>
-                            <a href="/" className="flex items-center gap-1.5 text-xs text-slate-700 hover:text-indigo-400 transition-colors opacity-80 hover:opacity-100">
+                            <a href="/" className="flex items-center gap-1 text-xs text-slate-600 hover:text-slate-400 transition-colors">
                                 <span>Made by</span>
-                                <span className="font-bold flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3 text-indigo-500" /> Siteo
-                                </span>
+                                <span className="font-bold text-slate-400">Site<span style={{ color: '#6366F1' }}>o</span></span>
                             </a>
                         </div>
                     </div>
