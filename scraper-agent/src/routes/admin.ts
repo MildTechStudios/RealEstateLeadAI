@@ -242,4 +242,98 @@ router.post('/notify-agent/:id', verifySupabaseUser, async (req, res) => {
     }
 });
 
+// GET EMAILS: GET /api/admin/emails
+router.get('/emails', verifySupabaseUser, async (req, res) => {
+    try {
+        console.log('[Admin] Fetching email logs (DB mode)...');
+        const { getDb } = await import('../services/db');
+        const db = getDb();
+
+        if (!db) {
+            console.error('[Admin] Database not initialized');
+            return res.status(500).json({ error: 'Database not initialized' });
+        }
+
+        const { data, error } = await db
+            .from('email_logs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (error) {
+            console.error('[Admin] DB Error fetching logs:', error);
+            throw error;
+        }
+
+        console.log(`[Admin] Successfully fetched ${data?.length} logs`);
+        res.json({ data: data || [] });
+
+    } catch (err: any) {
+        console.error('Fetch emails error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// TEST EMAIL: POST /api/admin/test-email
+router.post('/test-email', verifySupabaseUser, async (req, res) => {
+    try {
+        const { resend } = await import('../services/email');
+        const { getDb } = await import('../services/db');
+
+        if (!resend) return res.status(500).json({ error: 'Resend not configured' });
+
+        // Use the configured FROM email as the TO email for safety/testing
+        // or allow user to specify if they are admin.
+        // For now, let's send to a hardcoded safe address or the configured FROM address (if it's a real inbox)
+        // Actually, let's send to 'onboarding@resend.dev' if in test mode, or the user's email?
+        // Let's just send to "delivered@resend.dev" which is a magic address that always succeeds
+        // OR better, send to the user who is logged in (if we had their email).
+        // Let's use 'delivered@resend.dev' to guarantee a log entry.
+
+        // Send actual email
+        const { data: result, error } = await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+            to: 'delivered@resend.dev',
+            subject: 'Test Email from Siteo Admin',
+            html: '<p>This is a test email to verify logs.</p>'
+        });
+
+        if (error) throw error;
+
+        // Log to DB explicitly here too (or rely on service if we used a shared function)
+        const db = getDb();
+        if (db) {
+            await db.from('email_logs').insert({
+                recipient: 'delivered@resend.dev',
+                subject: 'Test Email from Siteo Admin',
+                status: 'sent',
+                resend_id: result?.id,
+                created_at: new Date().toISOString()
+            });
+        }
+
+        res.json({ success: true, id: result?.id });
+
+    } catch (err: any) {
+        console.error('Test email error:', err);
+
+        // Log failure if possible
+        try {
+            const { getDb } = await import('../services/db');
+            const db = getDb();
+            if (db) {
+                await db.from('email_logs').insert({
+                    recipient: 'delivered@resend.dev',
+                    subject: 'Test Email from Siteo Admin',
+                    status: 'failed',
+                    error_message: err.message,
+                    created_at: new Date().toISOString()
+                });
+            }
+        } catch (e) { }
+
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export const adminRoutes = router;

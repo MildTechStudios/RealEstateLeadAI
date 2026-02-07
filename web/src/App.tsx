@@ -12,8 +12,10 @@ import { PlatformLogin } from './pages/PlatformLogin'
 import { Header } from './components/layout/Header'
 import { AgentInput } from './components/agent/AgentInput'
 import { AgentCard } from './components/agent/AgentCard'
+
 import { LeadsList } from './components/leads/LeadsList'
 import { BulkImport } from './components/import/BulkImport'
+import { EmailLogs } from './components/admin/EmailLogs'
 import { Background } from './components/ui/Background'
 import { Tabs } from './components/layout/Tabs'
 import { extractProfile, isValidCBUrl } from './services/api'
@@ -143,7 +145,8 @@ function App() {
             views={[
               { id: 'import', label: 'Single Import' },
               { id: 'bulk', label: 'Bulk Import' },
-              { id: 'leads', label: 'My Leads' }
+              { id: 'leads', label: 'My Leads' },
+              { id: 'emails', label: 'Email Logs' }
             ]}
             currentView={view}
             onChange={setView}
@@ -224,6 +227,12 @@ function App() {
           {view === 'leads' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <LeadsList />
+            </div>
+          )}
+
+          {view === 'emails' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <EmailLogs />
             </div>
           )}
         </main>

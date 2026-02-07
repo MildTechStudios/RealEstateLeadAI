@@ -13,6 +13,8 @@ import { saveProfile } from './services/db';
 
 dotenv.config();
 
+console.log('[Server] Starting Agent Scraper API...');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -26,6 +28,9 @@ app.use('/api/admin', adminRoutes);
 
 import { publicRoutes } from './routes/public';
 app.use('/api/public', publicRoutes);
+
+import { webhookRoutes } from './routes/webhooks';
+app.use('/api/webhooks', webhookRoutes);
 
 import agentRoutes from './routes/agent';
 app.use('/api/agent', agentRoutes);
@@ -261,4 +266,14 @@ app.listen(PORT, () => {
     console.log(`   POST /api/extract - Extract & Auto-Save CB profile (Protected)`);
     console.log(`   POST /api/contact - Send contact form email (Public)`);
     console.log(`   GET  /api/health  - Health check\n`);
+});
+
+// Global Error Handlers to prevent silent crashes
+process.on('uncaughtException', (err) => {
+    console.error('CRITICAL: Uncaught Exception:', err);
+    // Ideally we'd restart, but preventing immediate exit might help debug
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
 });

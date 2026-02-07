@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { motion } from 'framer-motion'
-import { Sparkles, ArrowRight, Lock } from 'lucide-react'
+import { ArrowRight, Lock } from 'lucide-react'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -75,10 +75,7 @@ export function PlatformLogin() {
                     className="relative z-10 max-w-lg"
                 >
                     <div className="flex items-center gap-3 mb-8">
-                        <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                            <Sparkles className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-2xl font-bold tracking-tight text-white">Siteo</span>
+                        <span className="text-4xl font-bold tracking-tight text-white">Site<span style={{ color: '#6366F1' }}>o</span></span>
                     </div>
 
                     <h1 className="text-5xl lg:text-6xl font-bold tracking-tight text-white mb-6 leading-[1.1]">

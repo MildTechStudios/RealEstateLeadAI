@@ -11,7 +11,7 @@ const apiKey = process.env.RESEND_API_KEY;
 if (!apiKey) {
   console.warn('[Email] RESEND_API_KEY is not set. Email sending will be disabled.');
 }
-const resend = apiKey ? new Resend(apiKey) : null;
+export const resend = apiKey ? new Resend(apiKey) : null;
 
 // The "From" email must be from your verified domain
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@yourdomain.com';
@@ -128,11 +128,43 @@ export async function sendContactEmail(data: ContactFormData): Promise<{ success
       return { success: false, error: error.message };
     }
 
+    // Log to Database
+    try {
+      const { getDb } = await import('./db');
+      const db = getDb();
+      if (db) {
+        await db.from('email_logs').insert({
+          recipient: agentEmail,
+          subject: `New Website Inquiry from ${visitorName}`,
+          status: 'sent',
+          resend_id: result?.id,
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (logErr) {
+      console.error('[Email] Failed to log to DB:', logErr);
+    }
+
     console.log(`[Email] Email sent successfully. ID: ${result?.id}`);
     return { success: true, id: result?.id };
 
   } catch (err: any) {
     console.error('[Email] Unexpected error:', err);
+    // Log failure
+    try {
+      const { getDb } = await import('./db');
+      const db = getDb();
+      if (db) {
+        await db.from('email_logs').insert({
+          recipient: agentEmail,
+          subject: `New Website Inquiry from ${visitorName}`,
+          status: 'failed',
+          error_message: err.message,
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (logErr) { console.error('DB Log Error', logErr) }
+
     return { success: false, error: err.message || 'Failed to send email' };
   }
 }
@@ -149,12 +181,11 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ succes
   const { agentName, agentEmail, websiteUrl, adminUrl, defaultPassword } = data;
 
   try {
+    // Start with a strict check
     if (!resend) {
-      console.error('[Email] Cannot send email: Resend client not initialized (missing API key).');
-      return { success: false, error: 'Email service not configured (missing API key)' };
+      console.error('[Email] Resend client not initialized');
+      return { success: false, error: 'Email service not configured' };
     }
-
-    console.log(`[Email] Sending welcome email to ${agentEmail}`);
 
     const { data: result, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -224,19 +255,46 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ succes
 
 </body>
 </html>
-      `,
+      `
     });
 
-    if (error) {
-      console.error('[Email] Resend error:', error);
-      return { success: false, error: error.message };
+    if (error) throw error; // Handle error in catch
+
+    // Log to Database
+    try {
+      const { getDb } = await import('./db');
+      const db = getDb();
+      if (db) {
+        await db.from('email_logs').insert({
+          recipient: agentEmail,
+          subject: `Your Website is Ready! - ${agentName}`,
+          status: 'sent',
+          resend_id: result?.id,
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (logErr) {
+      console.error('[Email] Failed to log to DB:', logErr);
     }
 
-    console.log(`[Email] Welcome email sent successfully. ID: ${result?.id}`);
     return { success: true, id: result?.id };
 
   } catch (err: any) {
-    console.error('[Email] Unexpected error:', err);
-    return { success: false, error: err.message || 'Failed to send email' };
+    // Log failure
+    try {
+      const { getDb } = await import('./db');
+      const db = getDb();
+      if (db) {
+        await db.from('email_logs').insert({
+          recipient: agentEmail,
+          subject: `Your Website is Ready! - ${agentName}`,
+          status: 'failed',
+          error_message: err.message,
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (logErr) { }
+
+    return { success: false, error: err.message };
   }
 }
