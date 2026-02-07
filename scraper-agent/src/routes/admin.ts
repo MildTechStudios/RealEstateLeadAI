@@ -209,11 +209,12 @@ router.post('/notify-agent/:id', verifySupabaseUser, async (req, res) => {
 
         // If custom domain is set and working, use it? Or just always link to the platform wrapper?
         // Let's use the direct link logic similar to the frontend "Open Website" button
+        const safeSlug = slug || id;
         const websiteUrl = customDomain
             ? `https://${customDomain}`
-            : `${CLIENT_URL}/w/${slug}`;
+            : `${CLIENT_URL}/w/${safeSlug}`;
 
-        const adminUrl = `${CLIENT_URL}/w/${slug}/admin/login`;
+        const adminUrl = `${CLIENT_URL}/w/${safeSlug}/admin/login`;
 
         // Get default password from env or constant
         // Note: In a real app we might not send this if they've already logged in, 
