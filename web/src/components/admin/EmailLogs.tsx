@@ -114,18 +114,21 @@ export function EmailLogs() {
                 </div>
             )}
 
-            <CRMBoard
-                leads={activeLeads}
-                emailLogs={logs}
-                onSelectLead={(lead) => {
-                    // Only open modal for real leads
-                    if (!lead.id.startsWith('ghost-')) {
-                        setSelectedLead(lead)
-                        setShowModal(true)
-                    }
-                }}
-                loading={loading}
-            />
+            {/* Full Width Breakout Container */}
+            <div className="w-screen relative left-1/2 -translate-x-1/2 bg-slate-950/50 border-y border-slate-800/50 backdrop-blur-sm px-4 sm:px-6 lg:px-8 py-8">
+                <CRMBoard
+                    leads={activeLeads}
+                    emailLogs={logs}
+                    onSelectLead={(lead) => {
+                        // Only open modal for real leads
+                        if (!lead.id.startsWith('ghost-')) {
+                            setSelectedLead(lead)
+                            setShowModal(true)
+                        }
+                    }}
+                    loading={loading}
+                />
+            </div>
 
             {selectedLead && showModal && (
                 <LeadDetailsModal
