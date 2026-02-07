@@ -202,7 +202,7 @@ router.post('/notify-agent/:id', verifySupabaseUser, async (req, res) => {
         // 2. Prepare Email Data
         // Determine live URL (Custom Domain or Subdirectory)
         const customDomain = agent.website_config?.custom_domain;
-        const slug = agent.slug;
+        const slug = agent.website_slug;
 
         // Base URL from env or default
         const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'; // Fallback for dev

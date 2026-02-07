@@ -20,7 +20,12 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+// Capture raw body for Stripe webhook verification
+app.use(express.json({
+    verify: (req: any, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 
 import { verifySupabaseUser } from './middleware/supabaseAuth';
 import { adminRoutes } from './routes/admin';
@@ -31,6 +36,9 @@ app.use('/api/public', publicRoutes);
 
 import { webhookRoutes } from './routes/webhooks';
 app.use('/api/webhooks', webhookRoutes);
+
+import { stripeRoutes } from './routes/stripe';
+app.use('/api/stripe', stripeRoutes);
 
 import agentRoutes from './routes/agent';
 app.use('/api/agent', agentRoutes);
@@ -209,12 +217,42 @@ app.patch('/api/leads/:id', verifySupabaseUser, async (req, res) => {
 
 app.post('/api/contact', async (req, res) => {
     try {
-        const { name, email, phone, message, agentId } = req.body;
+        const { name, email, phone, message, agentId, token } = req.body;
 
         // Validate required fields
         if (!name || !email || !message || !agentId) {
             return res.status(400).json({ error: 'Missing required fields: name, email, message, agentId' });
         }
+
+        // --- reCAPTCHA Validation ---
+        const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
+        if (RECAPTCHA_SECRET) {
+            if (!token) {
+                return res.status(400).json({ error: 'Missing reCAPTCHA token' });
+            }
+            try {
+                // Verify token with Google
+                const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`;
+                // Using axios (already imported? No, need to import or require)
+                // Since this is a TS file and axios is in package.json, let's use dynamic import or require
+                const axios = require('axios');
+                const recaptchaRes = await axios.post(verifyUrl);
+
+                const { success, score } = recaptchaRes.data;
+
+                if (!success || (score !== undefined && score < 0.5)) {
+                    console.warn(`[API] reCAPTCHA failed for ${email}: Success=${success}, Score=${score}`);
+                    return res.status(400).json({ error: 'Message flagged as spam by reCAPTCHA.' });
+                }
+                console.log(`[API] reCAPTCHA passed: Score=${score}`);
+
+            } catch (verErr: any) {
+                console.error('[API] reCAPTCHA verification error:', verErr.message);
+                // Fail open or closed? Let's fail closed for security
+                return res.status(500).json({ error: 'Spam check failed' });
+            }
+        }
+        // ----------------------------
 
         // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

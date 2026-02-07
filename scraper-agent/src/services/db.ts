@@ -327,6 +327,7 @@ export interface LeadUpdateData {
     headshot_url?: string;
     password_hash?: string;
     is_paid?: boolean;
+    trial_started_at?: string;
 }
 
 export async function updateLead(

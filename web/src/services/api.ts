@@ -34,6 +34,7 @@ export interface DBProfile {
     website_published: boolean
     website_config: any | null
     is_paid?: boolean // Added for CRM
+    trial_started_at?: string | null // Added for Trial Logic
     created_at: string
     updated_at: string
 }
@@ -200,4 +201,23 @@ export async function getEmailLogs(): Promise<EmailLog[]> {
 
     const json = await response.json()
     return Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
+}
+
+/**
+ * Create Stripe Checkout Session
+ */
+export async function createCheckoutSession(leadId: string, returnUrl: string): Promise<{ url: string }> {
+    const response = await fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ leadId, returnUrl })
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to create checkout session')
+    }
+
+    return response.json()
 }

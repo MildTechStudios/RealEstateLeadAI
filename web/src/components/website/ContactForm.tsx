@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { motion } from 'framer-motion'
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 
@@ -18,6 +19,7 @@ export function ContactForm({ agentId, agentName }: ContactFormProps) {
     })
     const [status, setStatus] = useState<FormStatus>('idle')
     const [errorMessage, setErrorMessage] = useState('')
+    const { executeRecaptcha } = useGoogleReCaptcha()
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -29,12 +31,23 @@ export function ContactForm({ agentId, agentName }: ContactFormProps) {
         setErrorMessage('')
 
         try {
+            if (!executeRecaptcha) {
+                console.warn('Recaptcha not ready')
+                // Proceed without token? Or wait? 
+                // Better to throw error or wait, but for MVP soft fail?
+                // Backend requires token, so we fail if not ready.
+                throw new Error('Security check loading. Please try again.')
+            }
+
+            const token = await executeRecaptcha('contact_form')
+
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/contact`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
-                    agentId
+                    agentId,
+                    token
                 })
             })
 

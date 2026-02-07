@@ -35,7 +35,8 @@ router.post('/login', async (req, res) => {
             console.log(`[Auth] Agent ${slug} has no password hash. Checking default credentials...`);
 
             // Use environment variable for default password (set in .env)
-            const defaultPassword = process.env.DEFAULT_AGENT_PASSWORD || 'changeme';
+            // Use environment variable for default password (set in .env)
+            const defaultPassword = process.env.DEFAULT_AGENT_PASSWORD || 'welcome123';
 
             if (password === defaultPassword) {
                 console.log(`[Auth] Default password accepted. Migrating agent ${slug} to secure hash...`);
@@ -56,6 +57,15 @@ router.post('/login', async (req, res) => {
         }
 
         console.log(`[Auth] Login success for ${slug}`);
+
+        // Start Trial if not already started
+        if (!agent.trial_started_at) {
+            console.log(`[Auth] Starting trial for ${slug} on first login.`);
+            const now = new Date().toISOString();
+            await updateLead(agent.id, { trial_started_at: now });
+            // Update local object so token/claims (if any) reflect it, or irrelevant
+            agent.trial_started_at = now;
+        }
 
         // 3. Generate Token
         const token = generateToken(agent.id, agent.website_slug);
