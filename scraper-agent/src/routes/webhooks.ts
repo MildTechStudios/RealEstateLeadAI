@@ -36,6 +36,7 @@ router.post('/resend', async (req, res) => {
             case 'email.delivery_delayed': status = 'delivery_delayed'; break;
             case 'email.complained': status = 'complained'; break;
             case 'email.bounced': status = 'bounced'; break;
+            case 'email.suppressed': status = 'bounced'; break; // Treat suppression as bounce
             case 'email.opened': status = 'opened'; break;
             case 'email.clicked': status = 'clicked'; break;
             default: status = 'sent'; // active/unknown
