@@ -16,15 +16,15 @@ export function LeadsList() {
     const [showModal, setShowModal] = useState(false)
 
     useEffect(() => {
-        fetchLeads()
+        fetchData()
     }, [])
 
-    const fetchLeads = async () => {
+    const fetchData = async () => {
         try {
             const data = await getLeads()
             setLeads(data)
         } catch (err) {
-            setError('Failed to load leads')
+            setError('Failed to load data')
         } finally {
             setLoading(false)
         }
@@ -56,6 +56,9 @@ export function LeadsList() {
         try {
             await adminApi.notifyAgent(lead.id)
             alert(`Welcome email sent to ${lead.full_name}!`)
+            // Refresh logs to show "Sent" status immediately (optional)
+            // In real app, we might just optimise update local state
+            fetchData()
         } catch (err: any) {
             alert('Failed to send email: ' + (err.message || 'Unknown error'))
         } finally {
@@ -85,7 +88,7 @@ export function LeadsList() {
         return (
             <div className="p-8 text-center bg-red-500/10 border border-red-500/20 rounded-2xl backdrop-blur-sm">
                 <p className="text-red-400">{error}</p>
-                <button onClick={fetchLeads} className="mt-4 px-4 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors">
+                <button onClick={fetchData} className="mt-4 px-4 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors">
                     Try Again
                 </button>
             </div>
@@ -95,12 +98,14 @@ export function LeadsList() {
     return (
         <>
             <div className="space-y-6">
-                {/* Header / Search */}
+                {/* Header / Search / Toggle */}
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/40 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
-                    <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                        <span className="w-2 h-6 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
-                        My Leads <span className="text-slate-500 text-sm font-normal ml-2">({leads.length})</span>
-                    </h2>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                            <span className="w-2 h-6 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
+                            My Leads <span className="text-slate-500 text-sm font-normal ml-2">({leads.length})</span>
+                        </h2>
+                    </div>
 
                     <div className="relative w-full sm:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -290,6 +295,7 @@ export function LeadsList() {
                         </div>
                     </div>
                 </div>
+
             </div>
 
             {/* Lead Details Modal - Only triggers if button clicked */}
@@ -298,7 +304,7 @@ export function LeadsList() {
                     lead={selectedLead}
                     isOpen={true}
                     onClose={() => setShowModal(false)}
-                    onUpdated={fetchLeads}
+                    onUpdated={fetchData}
                 />
             )}
         </>

@@ -32,11 +32,19 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
         youtube_url: lead.youtube_url || '',
         logo_url: lead.logo_url || '',
         brokerage_logo_url: lead.brokerage_logo_url || '',
+        is_paid: lead.is_paid || false,
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
     }
+
+    const togglePaid = () => {
+        if (!isEditing) return
+        setFormData(prev => ({ ...prev, is_paid: !prev.is_paid }))
+    }
+
+
 
     const handleSave = async () => {
         setIsSaving(true)
@@ -70,6 +78,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
             youtube_url: lead.youtube_url || '',
             logo_url: lead.logo_url || '',
             brokerage_logo_url: lead.brokerage_logo_url || '',
+            is_paid: lead.is_paid || false,
         })
         setIsEditing(false)
         setError(null)
@@ -116,7 +125,14 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                                 )}
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-white">{lead.full_name}</h2>
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    {lead.full_name}
+                                    {formData.is_paid && (
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs border border-emerald-500/20">
+                                            Paid
+                                        </span>
+                                    )}
+                                </h2>
                                 <p className="text-sm text-slate-400">{lead.brokerage}</p>
                             </div>
                         </div>
@@ -182,6 +198,26 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onUpdated }: LeadDetai
                                         {error}
                                     </div>
                                 )}
+
+                                {/* Admin Status - Manual Paid Toggle */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Admin Status</h3>
+                                    <div className="flex items-center gap-4 bg-slate-800/30 p-4 rounded-xl border border-white/5">
+                                        <div className="flex-1">
+                                            <h4 className="text-white font-medium">Subscription Status</h4>
+                                            <p className="text-xs text-slate-400">Manually override the paid status for this agent.</p>
+                                        </div>
+                                        <button
+                                            onClick={togglePaid}
+                                            disabled={!isEditing}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.is_paid ? 'bg-emerald-500' : 'bg-slate-700'} ${!isEditing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.is_paid ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </button>
+                                    </div>
+                                </div>
+
+
 
                                 {/* Basic Info */}
                                 <div className="space-y-4">

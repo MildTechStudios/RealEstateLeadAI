@@ -33,6 +33,7 @@ export interface DBProfile {
     website_slug: string | null
     website_published: boolean
     website_config: any | null
+    is_paid?: boolean // Added for CRM
     created_at: string
     updated_at: string
 }
@@ -182,4 +183,21 @@ export async function updateLead(
         const err = await response.json()
         throw new Error(err.error || 'Failed to update lead')
     }
+}
+
+/**
+ * Fetch email logs (admin)
+ */
+import type { EmailLog } from '../types/email'
+export async function getEmailLogs(): Promise<EmailLog[]> {
+    const response = await fetch(`${API_BASE}/api/admin/emails`, {
+        headers: getAuthHeaders()
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch email logs')
+    }
+
+    const json = await response.json()
+    return Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : [])
 }

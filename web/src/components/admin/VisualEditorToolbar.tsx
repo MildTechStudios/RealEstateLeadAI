@@ -44,7 +44,7 @@ export function VisualEditorToolbar({
             const token = localStorage.getItem(`admin_token_${slug}`)
             if (token) {
                 const { url } = await adminApi.uploadImage(token, file)
-                console.log('Uploaded URL:', url)
+                // console.log('Uploaded URL:', url)
                 onUpdateConfig(configKey, url)
                 // alert('Image uploaded successfully!') // Remove alert to be less intrusive? Or keep it? Let's keep simpler success indication if possible or just rely on UI update.
             }

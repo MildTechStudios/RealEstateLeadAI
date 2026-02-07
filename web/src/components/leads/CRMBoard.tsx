@@ -1,0 +1,167 @@
+import { motion } from 'framer-motion'
+import type { DBProfile } from '../../services/api'
+import type { EmailLog } from '../../types/email'
+import {
+    CheckCircle,
+    Eye,
+    MousePointerClick,
+    Globe,
+    DollarSign,
+    Ban,
+    ExternalLink,
+    Mail
+} from 'lucide-react'
+
+interface CRMBoardProps {
+    leads: DBProfile[]
+    emailLogs: EmailLog[]
+    onSelectLead: (lead: DBProfile) => void
+    loading: boolean
+}
+
+type Stage = 'New' | 'Delivered' | 'Opened' | 'Clicked' | 'Connected' | 'Paid' | 'Bounced'
+
+const STAGES: { id: Stage; label: string; icon: any; color: string; bg: string }[] = [
+    { id: 'Delivered', label: 'Delivered', icon: CheckCircle, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { id: 'Opened', label: 'Opened', icon: Eye, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+    { id: 'Clicked', label: 'Clicked', icon: MousePointerClick, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { id: 'Connected', label: 'Connected', icon: Globe, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+    { id: 'Paid', label: 'Paid', icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { id: 'Bounced', label: 'Bounced', icon: Ban, color: 'text-red-500', bg: 'bg-red-500/10' },
+]
+
+export function CRMBoard({ leads, emailLogs, onSelectLead, loading }: CRMBoardProps) {
+
+    // Helper to get sorted logs for a lead (Latest first)
+    const getSortedLeadLogs = (lead: DBProfile) => {
+        const normalize = (email?: string | null) => email?.trim().toLowerCase() || ''
+        const leadEmail = normalize(lead.primary_email)
+        if (!leadEmail) return []
+
+        return emailLogs.filter(l =>
+            normalize(l.recipient) === leadEmail ||
+            (l.to && l.to.some(t => normalize(t) === leadEmail))
+        ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    }
+
+    const getStage = (lead: DBProfile): Stage => {
+        if (lead.is_paid) return 'Paid'
+        if (lead.website_config?.custom_domain) return 'Connected'
+
+        const sortedLogs = getSortedLeadLogs(lead)
+        const latestLog = sortedLogs[0]
+
+        // If no logs, hidden
+        if (!latestLog) return 'New'
+
+        // Classify based ONLY on the LATEST log status
+        if (latestLog.status === 'clicked') return 'Clicked'
+        if (latestLog.status === 'opened') return 'Opened'
+        if (['bounced', 'failed', 'suppressed'].includes(latestLog.status)) return 'Bounced'
+
+        // Default to Delivered for any other status (sent, delivered, queued, etc)
+        // This ensures the lead moves to 'Delivered' when a new email is sent, 
+        // regardless of historical clicks/opens on OLD emails.
+        return 'Delivered'
+    }
+
+    // Group leads by stage
+    const columns = STAGES.reduce((acc, stage) => {
+        acc[stage.id] = leads.filter(l => getStage(l) === stage.id)
+        return acc
+    }, {} as Record<Stage, DBProfile[]>)
+
+    if (loading) {
+        return <div className="p-10 text-center text-slate-500">Loading pipeline...</div>
+    }
+
+    return (
+        <div className="flex h-[calc(100vh-240px)] overflow-x-auto gap-6 pb-6 px-1 scrollbar-custom">
+            {STAGES.map((stage) => {
+                const stageLeads = columns[stage.id]
+                const Icon = stage.icon
+
+                return (
+                    <div key={stage.id} className="min-w-[320px] flex-1 flex-shrink-0 flex flex-col bg-slate-900/20 rounded-2xl border border-slate-800/10 backdrop-blur-sm">
+                        {/* Column Header */}
+                        <div className={`flex items-center justify-between p-4 rounded-t-2xl border-b border-slate-800/50 ${stage.bg} mb-1 sticky top-0 z-10 backdrop-blur-md`}>
+                            <div className="flex items-center gap-3">
+                                <Icon className={`w-5 h-5 ${stage.color}`} />
+                                <span className={`font-semibold text-base ${stage.color}`}>{stage.label}</span>
+                            </div>
+                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-900/50 text-slate-400 border border-slate-800/50">
+                                {stageLeads.length}
+                            </span>
+                        </div>
+
+                        {/* Column Content */}
+                        <div className="flex-1 overflow-y-auto space-y-3 p-3 scrollbar-thin">
+                            {stageLeads.map((lead) => {
+                                // Find latest log for this lead to display subject
+                                const lastLog = getSortedLeadLogs(lead)[0]
+
+                                return (
+                                    <motion.div
+                                        key={lead.id}
+                                        layoutId={lead.id}
+                                        onClick={() => onSelectLead(lead)}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        whileHover={{ y: -2 }}
+                                        className="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 rounded-xl p-4 cursor-pointer group transition-all duration-200 relative overflow-hidden"
+                                    >
+                                        {/* Subtle gradient background on hover */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-purple-500/0 to-pink-500/0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none" />
+
+                                        <div className="flex items-center gap-4 mb-3 relative z-10">
+                                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 overflow-hidden shrink-0 shadow-sm">
+                                                {lead.headshot_url ? (
+                                                    <img src={lead.headshot_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-sm font-bold text-slate-500">{lead.full_name[0]}</span>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className="text-base font-semibold text-white truncate group-hover:text-indigo-400 transition-colors">
+                                                    {lead.full_name}
+                                                </h4>
+                                                <p className="text-xs text-slate-500 truncate">{lead.brokerage || 'Email Contact'}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Latest Email Subject */}
+                                        {lastLog && (
+                                            <div className="mb-3 px-2.5 py-1.5 bg-slate-800/50 rounded-lg text-xs text-slate-300 truncate flex items-center gap-2 border border-slate-700/50 relative z-10 group-hover:bg-slate-800 transition-colors">
+                                                <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                                <span className="truncate flex-1 font-medium opacity-90">{lastLog.subject}</span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-3 border-t border-slate-800/50 relative z-10">
+                                            <span>{new Date(lead.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                            {lead.website_config?.website_published && (
+                                                <div draggable="false" className="flex items-center gap-1 text-emerald-500 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                                    <ExternalLink className="w-3 h-3" />
+                                                    Live
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                )
+                            })}
+
+                            {stageLeads.length === 0 && (
+                                <div className="h-32 border-2 border-dashed border-slate-800/30 rounded-xl flex flex-col items-center justify-center gap-2 text-slate-700 bg-slate-900/10">
+                                    <div className="p-2 rounded-full bg-slate-800/30 text-slate-700">
+                                        <Icon className="w-5 h-5 opacity-50" />
+                                    </div>
+                                    <span className="text-xs font-medium">No leads</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )
+            })}
+        </div>
+    )
+}

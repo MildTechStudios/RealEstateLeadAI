@@ -326,6 +326,7 @@ export interface LeadUpdateData {
     youtube_url?: string;
     headshot_url?: string;
     password_hash?: string;
+    is_paid?: boolean;
 }
 
 export async function updateLead(
