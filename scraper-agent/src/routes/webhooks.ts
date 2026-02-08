@@ -17,10 +17,11 @@ router.post('/resend', async (req, res) => {
         const data = event.data;
 
         if (!type || !data || !data.email_id) {
+            console.error('[Webhook] Invalid payload:', JSON.stringify(event));
             return res.status(400).json({ error: 'Invalid webhook payload' });
         }
 
-        console.log(`[Webhook] Received Resend event: ${type} for ${data.email_id}`);
+        console.log(`[Webhook] Processing ${type} for ${data.email_id}`);
 
         const db = getDb();
         if (!db) {
@@ -42,25 +43,28 @@ router.post('/resend', async (req, res) => {
             default: status = 'sent'; // active/unknown
         }
 
-        // We only want to update if the new status is "more significant" or just always update?
-        // Usually, we just want the latest status.
-        // 'opened' is better than 'delivered'. 'clicked' is better than 'opened'.
+        console.log(`[Webhook] Updating status to ${status} for ${data.email_id}`);
 
-        // Update the log entry by resend_id
         // Update the log entry by resend_id
         const { data: updatedLog, error } = await db
             .from('email_logs')
             .update({
-                status: status,
+                status: status
             })
             .eq('resend_id', data.email_id)
-            .select('lead_id')
+            .select('lead_id, status')
             .single();
 
         if (error) {
-            console.error('[Webhook] Failed to update log:', error);
-            return res.status(500).json({ error: error.message });
+            console.error('[Webhook] DB Update Error:', error);
+            // Don't return 500, just log it. Resend will retry if 500.
+            // But if it's a logic error (e.g. not found), we should probably returning 200 to stop retries?
+            // Actually, if update fails (e.g. row not found), error is likely null but data is null?
+            // .single() throws if 0 rows.
+            return res.status(200).json({ message: 'Log not found or update failed' });
         }
+
+        console.log(`[Webhook] DB Update Success. LeadID: ${updatedLog?.lead_id}. Checking trial trigger...`);
 
         // Start Trial on First Click & Send Admin Access Email
         if (type === 'email.clicked' && updatedLog?.lead_id) {
