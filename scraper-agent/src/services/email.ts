@@ -176,10 +176,11 @@ interface WelcomeEmailData {
   websiteUrl: string;
   adminUrl: string;
   defaultPassword: string;
+  leadId?: string; // Add optional leadId
 }
 
 export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ success: boolean; error?: string; id?: string }> {
-  const { agentName, agentEmail, websiteUrl } = data;
+  const { agentName, agentEmail, websiteUrl, leadId } = data;
 
   try {
     // Start with a strict check
@@ -251,7 +252,6 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ succes
     </div>
 
   </div>
-
 </body>
 </html>
       `
@@ -265,6 +265,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ succes
       const db = getDb();
       if (db) {
         await db.from('email_logs').insert({
+          lead_id: leadId || null, // Create relationship
           recipient: agentEmail,
           subject: `Question about your listings`,
           status: 'sent',

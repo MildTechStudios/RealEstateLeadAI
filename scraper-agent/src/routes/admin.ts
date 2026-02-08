@@ -228,7 +228,8 @@ router.post('/notify-agent/:id', verifySupabaseUser, async (req, res) => {
             agentEmail: agent.primary_email || agent.raw_profile?.email, // Fallback to raw profile email
             websiteUrl,
             adminUrl,
-            defaultPassword
+            defaultPassword,
+            leadId: agent.id // Critical for webhook tracking
         });
 
         if (!result.success) {
