@@ -35,6 +35,7 @@ export interface DBProfile {
     website_config: any | null
     is_paid?: boolean // Added for CRM
     stripe_subscription_id?: string | null // Added for Stripe Management
+    stripe_customer_id?: string | null // Added for Billing Portal
     trial_started_at?: string | null // Added for Trial Logic
     created_at: string
     updated_at: string

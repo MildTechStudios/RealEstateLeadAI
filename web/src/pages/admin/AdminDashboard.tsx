@@ -323,6 +323,36 @@ export function AdminDashboard() {
                                     </div>
                                 </div>
 
+                                {/* Billing Portal - For Paid Users */}
+                                {agent?.is_paid && agent?.stripe_customer_id && (
+                                    <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+                                        <h2 className="text-xl font-bold text-slate-900 mb-2">Billing & Payment Method</h2>
+                                        <p className="text-slate-500 mb-6">
+                                            Update your credit card, view payment history, and manage your subscription details.
+                                        </p>
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/stripe/create-portal-session`, {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ leadId: agent.id, returnUrl: window.location.href })
+                                                    });
+                                                    const data = await res.json();
+                                                    if (data.url) window.location.href = data.url;
+                                                    else alert('Failed to create portal session');
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    alert('Error launching billing portal');
+                                                }
+                                            }}
+                                            className="px-6 py-3 bg-white text-slate-700 font-semibold rounded-lg hover:bg-slate-50 border border-slate-300 shadow-sm transition-all"
+                                        >
+                                            Manage Subscription
+                                        </button>
+                                    </div>
+                                )}
+
                                 {/* Cancel Subscription - Only for paid users */}
                                 {agent?.is_paid && agent?.stripe_subscription_id && (
                                     <div className="bg-white border border-red-200 rounded-2xl p-8 shadow-sm">

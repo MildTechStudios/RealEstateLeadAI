@@ -195,12 +195,43 @@ router.post('/stripe', async (req: any, res) => {
 
         case 'customer.subscription.deleted':
             const sub = event.data.object as Stripe.Subscription;
-            // Lookup via customer ID or subscription ID?
-            // Need to find lead by subscription_id and set is_paid = false
-            // For now, logic handled?
-            // Implementation plan didn't specify cancellation handling, but good to note.
             console.log('[Stripe Webhook] Subscription deleted:', sub.id);
             // TODO: Set is_paid = false
+            break;
+
+        case 'invoice.payment_succeeded':
+            const invoice = event.data.object as Stripe.Invoice;
+            console.log(`[Stripe Webhook] Invoice payment succeeded: ${invoice.id}`);
+
+            if (invoice.billing_reason === 'subscription_create') {
+                 // Already handled by checkout.session.completed usually, but good as fallback
+                 console.log('[Stripe Webhook] Subscription create invoice. Skipping to avoid double email if checkout handles triggers.');
+                 // Actually checkout.session.completed sets is_paid. It doesn't send email.
+                 // So we SHOULD send email here.
+            }
+
+            // Find agent by customer ID
+            if (invoice.customer) {
+                const { data: agent, error } = await supabase
+                    .from('scraped_agents')
+                    .select('*')
+                    .eq('stripe_customer_id', invoice.customer)
+                    .single();
+                
+                if (agent && agent.primary_email) {
+                    const { sendPaymentSuccessEmail } = await import('../services/email');
+                    await sendPaymentSuccessEmail({
+                        agentName: agent.full_name,
+                        agentEmail: agent.primary_email,
+                        amount: `$${(invoice.amount_paid / 100).toFixed(2)}`,
+                        date: new Date(invoice.created * 1000).toLocaleDateString(),
+                        invoiceUrl: invoice.hosted_invoice_url || undefined
+                    });
+                    console.log(`[Stripe Webhook] Payment success email sent to ${agent.primary_email}`);
+                } else {
+                    console.warn(`[Stripe Webhook] Agent not found for customer ${invoice.customer}`);
+                }
+            }
             break;
 
         default:

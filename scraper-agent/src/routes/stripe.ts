@@ -125,4 +125,42 @@ router.post('/cancel-subscription', async (req, res) => {
     }
 });
 
-export { router as stripeRoutes };
+// POST /api/stripe/create-portal-session
+router.post('/create-portal-session', async (req, res) => {
+    try {
+        const { leadId, returnUrl } = req.body;
+
+        if (!leadId) {
+            return res.status(400).json({ error: 'Missing leadId' });
+        }
+
+        // Get Lead to find stripe_customer_id
+        const { data: lead, error } = await supabase
+            .from('scraped_agents')
+            .select('id, stripe_customer_id')
+            .eq('id', leadId)
+            .single();
+
+        if (error || !lead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+
+        if (!lead.stripe_customer_id) {
+            return res.status(400).json({ error: 'No associated Stripe customer found' });
+        }
+
+        // Create Portal Session
+        const session = await stripe.billingPortal.sessions.create({
+            customer: lead.stripe_customer_id,
+            return_url: returnUrl,
+        });
+
+        res.json({ url: session.url });
+
+    } catch (err: any) {
+        console.error('[Stripe] Error creating portal session:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+export const stripeRoutes = router;
