@@ -15,6 +15,8 @@ export function LeadsList() {
     const [sendingEmail, setSendingEmail] = useState(false)
     const [showModal, setShowModal] = useState(false)
 
+    const [activeTab, setActiveTab] = useState<'new' | 'contacted'>('new')
+
     useEffect(() => {
         fetchData()
     }, [])
@@ -24,6 +26,7 @@ export function LeadsList() {
             const data = await getLeads()
             setLeads(data)
         } catch (err) {
+            console.error(err)
             setError('Failed to load data')
         } finally {
             setLoading(false)
@@ -48,9 +51,13 @@ export function LeadsList() {
         try {
             await adminApi.notifyAgent(lead.id)
             alert(`Welcome email sent to ${lead.full_name}!`)
-            // Refresh logs to show "Sent" status immediately (optional)
-            // In real app, we might just optimise update local state
-            fetchData()
+            // Refresh logic to update last_contacted_at locally
+            setLeads(prev => prev.map(l =>
+                l.id === lead.id
+                    ? { ...l, last_contacted_at: new Date().toISOString() }
+                    : l
+            ))
+
         } catch (err: any) {
             alert('Failed to send email: ' + (err.message || 'Unknown error'))
         } finally {
@@ -60,12 +67,21 @@ export function LeadsList() {
 
     const filteredLeads = leads.filter(lead => {
         const term = searchTerm.toLowerCase()
-        return (
+        const matchesSearch = (
             lead.full_name?.toLowerCase().includes(term) ||
             lead.brokerage?.toLowerCase().includes(term) ||
             lead.city?.toLowerCase().includes(term)
         )
+
+        // Tab Filter
+        const isContacted = !!lead.last_contacted_at
+        const matchesTab = activeTab === 'contacted' ? isContacted : !isContacted
+
+        return matchesSearch && matchesTab
     })
+
+    const newLeadsCount = leads.filter(l => !l.last_contacted_at).length
+    const contactedLeadsCount = leads.filter(l => l.last_contacted_at).length
 
     if (loading) {
         return (
@@ -92,11 +108,28 @@ export function LeadsList() {
             <div className="space-y-6">
                 {/* Header / Search / Toggle */}
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/40 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                            <span className="w-2 h-6 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
-                            My Leads <span className="text-slate-500 text-sm font-normal ml-2">({leads.length})</span>
-                        </h2>
+                    <div className="flex items-center gap-2 p-1 bg-slate-800/50 rounded-lg border border-white/5">
+                        <button
+                            onClick={() => setActiveTab('new')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'new'
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                        >
+                            My Leads
+                            <span className="bg-slate-900/50 px-2 py-0.5 rounded-full text-xs">{newLeadsCount}</span>
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab('contacted')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'contacted'
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20 glow-purple' // glowing purple
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                        >
+                            Emailed Leads
+                            <span className="bg-slate-900/50 px-2 py-0.5 rounded-full text-xs">{contactedLeadsCount}</span>
+                        </button>
                     </div>
 
                     <div className="relative w-full sm:w-72">

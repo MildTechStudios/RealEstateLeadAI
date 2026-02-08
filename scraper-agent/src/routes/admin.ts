@@ -236,6 +236,14 @@ router.post('/notify-agent/:id', verifySupabaseUser, async (req, res) => {
             return res.status(500).json({ error: result.error });
         }
 
+        // Update last_contacted_at on success
+        const { error: updateError } = await db
+            .from('scraped_agents')
+            .update({ last_contacted_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (updateError) console.error('[Admin] Failed to update last_contacted_at:', updateError);
+
         res.json({ success: true, id: result.id });
 
     } catch (err: any) {
