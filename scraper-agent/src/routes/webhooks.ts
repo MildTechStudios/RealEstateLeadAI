@@ -204,20 +204,37 @@ router.post('/stripe', async (req: any, res) => {
             console.log(`[Stripe Webhook] Invoice payment succeeded: ${invoice.id}`);
 
             if (invoice.billing_reason === 'subscription_create') {
-                 // Already handled by checkout.session.completed usually, but good as fallback
-                 console.log('[Stripe Webhook] Subscription create invoice. Skipping to avoid double email if checkout handles triggers.');
-                 // Actually checkout.session.completed sets is_paid. It doesn't send email.
-                 // So we SHOULD send email here.
+                // Already handled by checkout.session.completed usually, but good as fallback
+                console.log('[Stripe Webhook] Subscription create invoice. Skipping to avoid double email if checkout handles triggers.');
+                // Actually checkout.session.completed sets is_paid. It doesn't send email.
+                // So we SHOULD send email here.
             }
 
-            // Find agent by customer ID
+            // Find agent by customer ID or Email (fallback)
             if (invoice.customer) {
-                const { data: agent, error } = await supabase
+                let { data: agent, error } = await supabase
                     .from('scraped_agents')
                     .select('*')
                     .eq('stripe_customer_id', invoice.customer)
                     .single();
-                
+
+                // Fallback: Try lookup by email if not found by customer ID (Race condition handling)
+                if (!agent && invoice.customer_email) {
+                    console.log(`[Stripe Webhook] Agent not found by customer ID ${invoice.customer}. Trying email: ${invoice.customer_email}`);
+                    const { data: agentByEmail } = await supabase
+                        .from('scraped_agents')
+                        .select('*')
+                        .eq('primary_email', invoice.customer_email)
+                        .single();
+                    agent = agentByEmail;
+
+                    // If found by email, might as well update the customer ID now?
+                    // Actually, checkout.session.completed will do it, but we can do it here too to be safe.
+                    if (agent) {
+                        await supabase.from('scraped_agents').update({ stripe_customer_id: invoice.customer as string }).eq('id', agent.id);
+                    }
+                }
+
                 if (agent && agent.primary_email) {
                     const { sendPaymentSuccessEmail } = await import('../services/email');
                     await sendPaymentSuccessEmail({
@@ -229,7 +246,7 @@ router.post('/stripe', async (req: any, res) => {
                     });
                     console.log(`[Stripe Webhook] Payment success email sent to ${agent.primary_email}`);
                 } else {
-                    console.warn(`[Stripe Webhook] Agent not found for customer ${invoice.customer}`);
+                    console.warn(`[Stripe Webhook] Agent not found for customer ${invoice.customer} / email ${invoice.customer_email}`);
                 }
             }
             break;
