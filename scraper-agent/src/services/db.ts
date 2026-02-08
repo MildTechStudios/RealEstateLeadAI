@@ -196,11 +196,54 @@ export async function getLeads(): Promise<{ success: boolean; data?: any[]; erro
 /**
  * Delete a lead by ID
  */
+/**
+ * Delete a lead by ID
+ * If the lead has an active Stripe subscription, cancel it first.
+ */
 export async function deleteLead(id: string): Promise<{ success: boolean; error?: string }> {
     const client = getSupabaseClient();
     if (!client) return { success: false, error: 'Database not configured' };
 
     try {
+        // 1. Get the lead to check for subscription
+        const { data: lead, error: fetchError } = await client
+            .from('scraped_agents')
+            .select('stripe_subscription_id')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) {
+            console.error('[DB] Error fetching lead for deletion:', fetchError);
+            // If lead not found, we can consider success (idempotent) or error. Let's error for safety.
+            return { success: false, error: fetchError.message };
+        }
+
+        // 2. Cancel Stripe Subscription if exists
+        if (lead?.stripe_subscription_id) {
+            const stripeKey = process.env.STRIPE_SECRET_KEY;
+            if (stripeKey) {
+                console.log(`[DB] Cancelling subscription ${lead.stripe_subscription_id} for lead ${id}...`);
+                try {
+                    // Dynamic import or require for Stripe since it's not a top-level import in this file
+                    const Stripe = require('stripe');
+                    const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' });
+
+                    await stripe.subscriptions.cancel(lead.stripe_subscription_id);
+                    console.log(`[DB] ✓ Subscription cancelled.`);
+                } catch (stripeErr: any) {
+                    console.error('[DB] Failed to cancel subscription:', stripeErr.message);
+                    // Proceed with delete anyway? Or block?
+                    // User requested "it will also cancel the subscription".
+                    // If cancellation fails, maybe we should block deletion to avoid orphaned subscription.
+                    return { success: false, error: `Failed to cancel subscription: ${stripeErr.message}` };
+                }
+            } else {
+                console.warn('[DB] STRIPE_SECRET_KEY missing. Cannot cancel subscription.');
+                // Proceed?
+            }
+        }
+
+        // 3. Delete the lead
         const { error } = await client
             .from('scraped_agents')
             .delete()

@@ -37,6 +37,36 @@ export const adminApi = {
         return response.json()
     },
 
+    forgotPassword: async (slug: string) => {
+        const response = await fetch(`${API_BASE}/api/agent/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug }),
+        })
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({ error: 'Request failed' }))
+            throw new Error(data.error || 'Request failed')
+        }
+
+        return response.json()
+    },
+
+    resetPassword: async (token: string, newPassword: string) => {
+        const response = await fetch(`${API_BASE}/api/agent/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, newPassword }),
+        })
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({ error: 'Reset failed' }))
+            throw new Error(data.error || 'Reset failed')
+        }
+
+        return response.json()
+    },
+
     changePassword: async (newPassword: string, token: string) => {
         const response = await fetch(`${API_BASE}/api/agent/change-password`, {
             method: 'POST',

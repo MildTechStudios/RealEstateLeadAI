@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { LogOut, Zap, LayoutDashboard, Settings, BarChart, Sparkles, Clock, AlertTriangle } from 'lucide-react'
-import { getWebsiteBySlug, createCheckoutSession, type DBProfile } from '../../services/api'
+import { getWebsiteBySlug, createCheckoutSession, cancelSubscription, type DBProfile } from '../../services/api'
 import { adminApi } from '../../services/adminApi'
 import { DomainManager } from '../../components/admin/DomainManager'
 
@@ -11,6 +11,7 @@ export function AdminDashboard() {
     const [agent, setAgent] = useState<DBProfile | null>(null)
     const [activeTab, setActiveTab] = useState<'overview' | 'settings'>('overview')
     const [upgrading, setUpgrading] = useState(false)
+    const [canceling, setCanceling] = useState(false)
     const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 })
 
     // Trial Logic
@@ -90,6 +91,24 @@ export function AdminDashboard() {
         } catch (err) {
             alert('Failed to start checkout')
             setUpgrading(false)
+        }
+    }
+
+    const handleCancelSubscription = async () => {
+        if (!agent) return
+        if (!confirm('Are you sure you want to cancel your subscription? Your website will remain active until the end of your billing period.')) return
+
+        setCanceling(true)
+        try {
+            await cancelSubscription(agent.id)
+            alert('Your subscription has been canceled. Your website will remain active until the end of your current billing period.')
+            // Refresh agent data
+            const data = await getWebsiteBySlug(slug!)
+            setAgent(data)
+        } catch (err: any) {
+            alert(err.message || 'Failed to cancel subscription')
+        } finally {
+            setCanceling(false)
         }
     }
 
@@ -230,7 +249,7 @@ export function AdminDashboard() {
                                                     ) : (
                                                         <>
                                                             <Sparkles className="w-5 h-5" />
-                                                            {isExpired ? 'Restore Website Access' : 'Activate Full Plan - $29/mo'}
+                                                            {isExpired ? 'Restore Website Access' : 'Activate Full Plan - $17/mo'}
                                                         </>
                                                     )}
                                                 </button>
@@ -294,12 +313,31 @@ export function AdminDashboard() {
                         )}
 
                         {activeTab === 'settings' && (
-                            <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-                                <h2 className="text-xl font-bold text-slate-900 mb-6">Security Settings</h2>
+                            <div className="space-y-8">
+                                <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+                                    <h2 className="text-xl font-bold text-slate-900 mb-6">Security Settings</h2>
 
-                                <div className="max-w-md">
-                                    <ChangePasswordForm slug={slug || ''} />
+                                    <div className="max-w-md">
+                                        <ChangePasswordForm slug={slug || ''} />
+                                    </div>
                                 </div>
+
+                                {/* Cancel Subscription - Only for paid users */}
+                                {agent?.is_paid && agent?.stripe_subscription_id && (
+                                    <div className="bg-white border border-red-200 rounded-2xl p-8 shadow-sm">
+                                        <h2 className="text-xl font-bold text-slate-900 mb-2">Subscription</h2>
+                                        <p className="text-slate-500 mb-6">
+                                            Your subscription is active. If you cancel, your website will remain live until the end of your current billing period.
+                                        </p>
+                                        <button
+                                            onClick={handleCancelSubscription}
+                                            disabled={canceling}
+                                            className="px-4 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 border border-red-200"
+                                        >
+                                            {canceling ? 'Canceling...' : 'Cancel Subscription'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 

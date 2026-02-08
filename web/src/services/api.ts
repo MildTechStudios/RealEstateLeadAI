@@ -34,6 +34,7 @@ export interface DBProfile {
     website_published: boolean
     website_config: any | null
     is_paid?: boolean // Added for CRM
+    stripe_subscription_id?: string | null // Added for Stripe Management
     trial_started_at?: string | null // Added for Trial Logic
     created_at: string
     updated_at: string
@@ -217,6 +218,40 @@ export async function createCheckoutSession(leadId: string, returnUrl: string): 
 
     if (!response.ok) {
         throw new Error('Failed to create checkout session')
+    }
+
+    return response.json()
+}
+
+/**
+ * Delete email logs for a recipient
+ */
+export async function deleteEmailLogs(recipient: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/api/admin/emails/${encodeURIComponent(recipient)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to delete email logs')
+    }
+}
+
+/**
+ * Cancel Subscription
+ */
+export async function cancelSubscription(leadId: string): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${API_BASE}/api/stripe/cancel-subscription`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ leadId })
+    })
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to cancel subscription')
     }
 
     return response.json()

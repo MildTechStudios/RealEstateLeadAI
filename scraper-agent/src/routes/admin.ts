@@ -275,6 +275,31 @@ router.get('/emails', verifySupabaseUser, async (req, res) => {
     }
 });
 
+// DELETE EMAILS: DELETE /api/admin/emails/:recipient
+router.delete('/emails/:recipient', verifySupabaseUser, async (req, res) => {
+    try {
+        const { recipient } = req.params;
+        const decodedRecipient = decodeURIComponent(String(recipient));
+
+        console.log(`[Admin] Deleting email logs for: ${decodedRecipient}`);
+
+        const db = getDb();
+        if (!db) return res.status(500).json({ error: 'Database not available' });
+
+        const { error } = await db
+            .from('email_logs')
+            .delete()
+            .eq('recipient', decodedRecipient);
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (err: any) {
+        console.error('Delete emails error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // TEST EMAIL: POST /api/admin/test-email
 router.post('/test-email', verifySupabaseUser, async (req, res) => {
     try {
@@ -333,6 +358,82 @@ router.post('/test-email', verifySupabaseUser, async (req, res) => {
             }
         } catch (e) { }
 
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// CRON: Send Trial Expiry Reminders
+// POST /api/admin/cron/trial-expiry-reminders
+// Call this daily (e.g., via Render Cron, GitHub Actions, or external scheduler)
+router.post('/cron/trial-expiry-reminders', async (req, res) => {
+    try {
+        // Verify cron secret (optional security)
+        const cronSecret = req.headers['x-cron-secret'];
+        const expectedSecret = process.env.CRON_SECRET;
+        if (expectedSecret && cronSecret !== expectedSecret) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const db = getDb();
+        if (!db) return res.status(500).json({ error: 'Database not available' });
+
+        const TRIAL_DURATION_DAYS = 30;
+        const REMINDER_DAYS_BEFORE = 10;
+        const DAYS_SINCE_TRIAL_START = TRIAL_DURATION_DAYS - REMINDER_DAYS_BEFORE; // 20 days
+
+        // Find agents whose trial started exactly 20 days ago (so 10 days left)
+        // We check for a 24-hour window to avoid missing anyone
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() - DAYS_SINCE_TRIAL_START);
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        console.log(`[Cron] Checking for trials started between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
+
+        const { data: agents, error } = await db
+            .from('scraped_agents')
+            .select('id, full_name, primary_email, website_slug, trial_started_at, is_paid')
+            .gte('trial_started_at', startOfDay.toISOString())
+            .lte('trial_started_at', endOfDay.toISOString())
+            .eq('is_paid', false); // Only unpaid (trial) users
+
+        if (error) throw error;
+
+        if (!agents || agents.length === 0) {
+            console.log('[Cron] No trial reminders to send today');
+            return res.json({ success: true, sent: 0 });
+        }
+
+        console.log(`[Cron] Found ${agents.length} agents to remind`);
+
+        const { sendTrialExpiryReminderEmail } = await import('../services/email');
+        const CLIENT_URL = process.env.CLIENT_URL || 'https://siteo.io';
+        let sentCount = 0;
+
+        for (const agent of agents) {
+            if (!agent.primary_email || !agent.website_slug) continue;
+
+            const result = await sendTrialExpiryReminderEmail({
+                agentName: agent.full_name,
+                agentEmail: agent.primary_email,
+                adminUrl: `${CLIENT_URL}/w/${agent.website_slug}/admin`,
+                daysLeft: REMINDER_DAYS_BEFORE
+            });
+
+            if (result.success) {
+                sentCount++;
+                console.log(`[Cron] Sent reminder to ${agent.primary_email}`);
+            } else {
+                console.error(`[Cron] Failed to send to ${agent.primary_email}:`, result.error);
+            }
+        }
+
+        res.json({ success: true, sent: sentCount, total: agents.length });
+
+    } catch (err: any) {
+        console.error('[Cron] Trial reminders error:', err);
         res.status(500).json({ error: err.message });
     }
 });

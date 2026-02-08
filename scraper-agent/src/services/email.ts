@@ -45,7 +45,8 @@ export async function sendContactEmail(data: ContactFormData): Promise<{ success
                 <!-- Preview in browser to see the final result -->
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
+<head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap" rel="stylesheet">
+  </head>
 <body style="margin:0; padding:40px 20px; background:#eef2f7; font-family: Arial, sans-serif;">
 
 <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
@@ -178,7 +179,7 @@ interface WelcomeEmailData {
 }
 
 export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ success: boolean; error?: string; id?: string }> {
-  const { agentName, agentEmail, websiteUrl, adminUrl, defaultPassword } = data;
+  const { agentName, agentEmail, websiteUrl } = data;
 
   try {
     // Start with a strict check
@@ -190,76 +191,62 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ succes
     const { data: result, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: agentEmail,
-      subject: `Your Website is Ready! - ${agentName}`,
+      subject: `Question about your listings`,
       html: `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Professional Website is Live</title>
+  <title>Question about your listings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0; padding:0; background-color:#f8fafc; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
 
   <div style="max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.05);">
 
-    <!-- Premium Header -->
-    <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 40px 32px; text-align:center;">
-      <p style="margin:0; color:#cbd5e1; font-size:12px; text-transform:uppercase; letter-spacing:3px; font-weight:700; opacity:0.9;">EXCLUSIVE PREVIEW</p>
-      <h1 style="margin:12px 0 0 0; color:#ffffff; font-size:28px; font-weight:800; line-height:1.2;">Your Custom Website<br>Is Now Live.</h1>
+    <!-- Header with Logo -->
+    <div style="background-color:#ffffff; padding: 32px; text-align:center; border-bottom: 1px solid #f1f5f9;">
+      <div style="font-family: 'Inter', system-ui, -apple-system, sans-serif; font-size: 32px; font-weight: 500; color: #0f172a; letter-spacing: -1px;">
+        Site<span style="color: #6366f1;">o</span>
+      </div>
     </div>
 
     <!-- Main Content -->
     <div style="padding: 40px 32px;">
 
       <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
-        Hello <strong>${agentName}</strong>,
+        Hi ${agentName},
       </p>
 
-      <p style="font-size:16px; color:#475569; line-height:1.6; margin-bottom:32px;">
-        We noticed your impressive profile and took the initiative to build a <strong>high-performance, custom website</strong> tailored specifically for your real estate business.
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
+        I was looking at where your listings send traffic online.
       </p>
 
-      <!-- Feature Highlight -->
-      <div style="background-color:#eff6ff; border-radius:12px; padding:24px; margin-bottom:32px; border:1px solid #dbeafe;">
-        <p style="margin:0 0 16px 0; font-size:14px; color:#1e40af; font-weight:700; text-transform:uppercase; letter-spacing:1px;">WHY UPGRADE?</p>
-        <ul style="margin:0; padding-left:20px; color:#334155; font-size:15px; line-height:1.8;">
-          <li>🚀 <strong>Instant Lead Capture:</strong> Optimized to convert visitors into clients.</li>
-          <li>📱 <strong>Mobile Perfect:</strong> Looks stunning on every device.</li>
-          <li>🎨 <strong>Fully Customizable:</strong> Update your brand in seconds.</li>
-        </ul>
-      </div>
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
+        When I searched your name like a buyer would, there wasn’t a clear personal site to land on, most clicks go to third-party pages.
+      </p>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:32px;">
+        We mocked up what buyers should see first.
+      </p>
 
       <p style="text-align:center; margin-bottom:32px;">
-        <a href="${websiteUrl}" style="display:inline-block; background-color:#4f46e5; color:#ffffff; font-size:16px; font-weight:bold; text-decoration:none; padding:16px 32px; border-radius:50px; box-shadow:0 4px 6px -1px rgba(79, 70, 229, 0.3);">
-          View My Live Website &rarr;
+        <a href="${websiteUrl}" style="display:inline-block; background-color:#4f46e5; color:#ffffff; font-size:16px; font-weight:bold; text-decoration:none; padding:12px 24px; border-radius:8px;">
+          View Preview
         </a>
       </p>
 
-      <div style="border-top:1px solid #e2e8f0; margin:32px 0;"></div>
-
-      <!-- Admin Access -->
-      <h3 style="margin:0 0 16px 0; color:#1e293b; font-size:18px; font-weight:700;">Take Ownership & Customize</h3>
-      <p style="font-size:15px; color:#64748b; line-height:1.6; margin-bottom:20px;">
-        Want to edit the content, swap photos, or connect your own domain? Log in to your personal Admin Console here:
-      </p>
-
-      <div style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
-        <p style="margin:0 0 8px 0; font-size:14px; color:#64748b;"><strong>Admin URL:</strong> <a href="${adminUrl}" style="color:#4f46e5; text-decoration:none;">${adminUrl}</a></p>
-        <p style="margin:0; font-size:14px; color:#64748b;"><strong>Temporary Password:</strong> <code style="background:#e2e8f0; padding:4px 8px; border-radius:4px; color:#0f172a; font-family:monospace; font-size:14px;">${defaultPassword}</code></p>
-      </div>
-
-      <p style="font-size:14px; color:#94a3b8; margin-top:16px;">
-        <em>Access is free for 30 days. No credit card required to view.</em>
+      <p style="font-size:16px; color:#334155; line-height:1.6;">
+        – Team Siteo
       </p>
 
     </div>
 
     <!-- Footer -->
     <div style="background-color:#f1f5f9; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0;">
-      <p style="margin:0 0 8px 0; color:#64748b; font-size:12px; font-weight:600;">Siteo Automation Team</p>
       <p style="margin:0; color:#94a3b8; font-size:11px;">
-        Sent to ${agentEmail} regarding your professional online presence.
+        Sent to ${agentEmail}
       </p>
     </div>
 
@@ -279,7 +266,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ succes
       if (db) {
         await db.from('email_logs').insert({
           recipient: agentEmail,
-          subject: `Your Website is Ready! - ${agentName}`,
+          subject: `Question about your listings`,
           status: 'sent',
           resend_id: result?.id,
           created_at: new Date().toISOString()
@@ -299,7 +286,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ succes
       if (db) {
         await db.from('email_logs').insert({
           recipient: agentEmail,
-          subject: `Your Website is Ready! - ${agentName}`,
+          subject: `Question about your listings`,
           status: 'failed',
           error_message: err.message,
           created_at: new Date().toISOString()
@@ -307,6 +294,304 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<{ succes
       }
     } catch (logErr) { }
 
+    return { success: false, error: err.message };
+  }
+}
+
+// Password Reset Email
+interface PasswordResetData {
+  agentName: string;
+  agentEmail: string;
+  resetUrl: string;
+}
+
+export async function sendPasswordResetEmail(data: PasswordResetData): Promise<{ success: boolean; error?: string; id?: string }> {
+  const { agentName, agentEmail, resetUrl } = data;
+
+  try {
+    if (!resend) {
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    console.log(`[Email] Sending password reset to ${agentEmail}`);
+
+    const { data: result, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: agentEmail,
+      subject: 'Reset Your Siteo Password',
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0; padding:0; background-color:#f8fafc; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+
+  <div style="max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+
+    <!-- Header -->
+    <div style="background-color:#ffffff; padding: 32px; text-align:center; border-bottom: 1px solid #f1f5f9;">
+      <div style="font-family: 'Inter', system-ui, sans-serif; font-size: 32px; font-weight: 500; color: #0f172a; letter-spacing: -1px;">
+        Site<span style="color: #6366f1;">o</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 40px 32px;">
+      <h1 style="font-size:24px; color:#0f172a; margin-bottom:24px;">Reset Your Password</h1>
+      
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
+        Hi ${agentName},
+      </p>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:32px;">
+        We received a request to reset your password. Click the button below to create a new password. This link expires in 1 hour.
+      </p>
+
+      <p style="text-align:center; margin-bottom:32px;">
+        <a href="${resetUrl}" style="display:inline-block; background-color:#4f46e5; color:#ffffff; font-size:16px; font-weight:bold; text-decoration:none; padding:14px 32px; border-radius:8px;">
+          Reset Password
+        </a>
+      </p>
+
+      <p style="font-size:14px; color:#64748b; line-height:1.6;">
+        If you didn't request this, you can safely ignore this email.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color:#f1f5f9; padding:24px 32px; text-align:center;">
+      <p style="margin:0; color:#94a3b8; font-size:11px;">
+        Sent to ${agentEmail}
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>
+      `
+    });
+
+    if (error) throw error;
+
+    return { success: true, id: result?.id };
+
+  } catch (err: any) {
+    console.error('[Email] Password reset email error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+// Admin Access Email (sent when agent clicks welcome email)
+interface AdminAccessEmailData {
+  agentName: string;
+  agentEmail: string;
+  adminUrl: string;
+  defaultPassword: string;
+}
+
+export async function sendAdminAccessEmail(data: AdminAccessEmailData): Promise<{ success: boolean; error?: string; id?: string }> {
+  const { agentName, agentEmail, adminUrl, defaultPassword } = data;
+
+  try {
+    if (!resend) {
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    console.log(`[Email] Sending admin access email to ${agentEmail}`);
+
+    const { data: result, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: agentEmail,
+      subject: 'Admin access to your website',
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0; padding:0; background-color:#f8fafc; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+
+  <div style="max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+
+    <!-- Header -->
+    <div style="background-color:#ffffff; padding: 32px; text-align:center; border-bottom: 1px solid #f1f5f9;">
+      <div style="font-family: 'Inter', system-ui, sans-serif; font-size: 32px; font-weight: 500; color: #0f172a; letter-spacing: -1px;">
+        Site<span style="color: #6366f1;">o</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 40px 32px;">
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
+        Hi ${agentName.split(' ')[0]},
+      </p>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
+        You checked the website preview earlier – this gives you full access in case you want to explore or edit it.
+      </p>
+
+      <div style="background-color:#f8fafc; border-radius:12px; padding:24px; margin-bottom:24px;">
+        <p style="margin:0 0 12px 0; font-size:14px; color:#64748b; font-weight:600;">Admin Dashboard:</p>
+        <p style="margin:0 0 20px 0;">
+          <a href="${adminUrl}" style="color:#4f46e5; font-size:15px; word-break:break-all;">${adminUrl}</a>
+        </p>
+        
+        <p style="margin:0 0 8px 0; font-size:14px; color:#64748b; font-weight:600;">Temporary access password:</p>
+        <p style="margin:0; font-size:18px; font-family:monospace; color:#0f172a; background:#e2e8f0; display:inline-block; padding:8px 16px; border-radius:6px;">${defaultPassword}</p>
+      </div>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:16px;">
+        Once you log in, you can <strong>change the password immediately</strong> from the settings.
+      </p>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:8px;">
+        From the dashboard you can:
+      </p>
+      <ul style="font-size:15px; color:#334155; line-height:1.8; margin:0 0 24px 0; padding-left:20px;">
+        <li>Edit text and images</li>
+        <li>Update contact details</li>
+        <li>Publish changes instantly</li>
+        <li><strong>Connect your own domain</strong> (so it runs on <em>your</em> URL)</li>
+      </ul>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:0;">
+        If anything looks off or you have questions, just reply here.
+      </p>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-top:24px;">
+        – Team Siteo
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color:#f1f5f9; padding:24px 32px; text-align:center;">
+      <p style="margin:0; color:#94a3b8; font-size:11px;">
+        Sent to ${agentEmail}
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>
+      `
+    });
+
+    if (error) throw error;
+
+    return { success: true, id: result?.id };
+
+  } catch (err: any) {
+    console.error('[Email] Admin access email error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+// Trial Expiry Reminder Email (10 days left)
+interface TrialExpiryEmailData {
+  agentName: string;
+  agentEmail: string;
+  adminUrl: string;
+  daysLeft: number;
+}
+
+export async function sendTrialExpiryReminderEmail(data: TrialExpiryEmailData): Promise<{ success: boolean; error?: string; id?: string }> {
+  const { agentName, agentEmail, adminUrl, daysLeft } = data;
+
+  try {
+    if (!resend) {
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    console.log(`[Email] Sending trial expiry reminder to ${agentEmail} (${daysLeft} days left)`);
+
+    const { data: result, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: agentEmail,
+      subject: `${daysLeft} days left to keep your site active`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0; padding:0; background-color:#f8fafc; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+
+  <div style="max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+
+    <!-- Header -->
+    <div style="background-color:#ffffff; padding: 32px; text-align:center; border-bottom: 1px solid #f1f5f9;">
+      <div style="font-family: 'Inter', system-ui, sans-serif; font-size: 32px; font-weight: 500; color: #0f172a; letter-spacing: -1px;">
+        Site<span style="color: #6366f1;">o</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 40px 32px;">
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
+        Hi ${agentName.split(' ')[0]},
+      </p>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
+        Just a heads-up – your website preview is scheduled to expire in <strong>${daysLeft} days</strong>.
+      </p>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:8px;">
+        If you want to keep it:
+      </p>
+      <ul style="font-size:15px; color:#334155; line-height:1.8; margin:0 0 24px 0; padding-left:20px;">
+        <li>Make edits</li>
+        <li>Connect your own domain</li>
+        <li>Or continue using it as your main site</li>
+      </ul>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-bottom:24px;">
+        You can access everything here:
+      </p>
+
+      <p style="text-align:center; margin-bottom:32px;">
+        <a href="${adminUrl}" style="display:inline-block; background-color:#4f46e5; color:#ffffff; font-size:16px; font-weight:bold; text-decoration:none; padding:14px 32px; border-radius:8px;">
+          Go to Dashboard
+        </a>
+      </p>
+
+      <p style="font-size:14px; color:#64748b; line-height:1.6; margin-bottom:0;">
+        If you decide not to continue, no action needed – it'll simply deactivate.
+      </p>
+
+      <p style="font-size:16px; color:#334155; line-height:1.6; margin-top:24px;">
+        – Team Siteo
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color:#f1f5f9; padding:24px 32px; text-align:center;">
+      <p style="margin:0; color:#94a3b8; font-size:11px;">
+        Sent to ${agentEmail}
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>
+      `
+    });
+
+    if (error) throw error;
+
+    return { success: true, id: result?.id };
+
+  } catch (err: any) {
+    console.error('[Email] Trial expiry reminder error:', err);
     return { success: false, error: err.message };
   }
 }

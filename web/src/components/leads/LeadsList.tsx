@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
-import { getLeads, deleteLead, type DBProfile } from '../../services/api'
+import { getLeads, type DBProfile } from '../../services/api'
 import { adminApi } from '../../services/adminApi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, Search, Mail, Phone, MapPin, Globe, Shield, X, Loader2 } from 'lucide-react'
 import { LeadDetailsModal } from './LeadDetailsModal'
+import { DeleteLeadModal } from './DeleteLeadModal'
 
 export function LeadsList() {
     const [leads, setLeads] = useState<DBProfile[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [error, setError] = useState<string | null>(null)
-    const [deletingId, setDeletingId] = useState<string | null>(null)
     const [selectedLead, setSelectedLead] = useState<DBProfile | null>(null)
     const [sendingEmail, setSendingEmail] = useState(false)
     const [showModal, setShowModal] = useState(false)
@@ -30,20 +30,12 @@ export function LeadsList() {
         }
     }
 
-    const handleDelete = async (id: string, e: React.MouseEvent) => {
-        e.stopPropagation()
-        if (!confirm('Are you sure you want to delete this lead?')) return
+    // State for delete confirmation
+    const [leadToDelete, setLeadToDelete] = useState<DBProfile | null>(null)
 
-        try {
-            setDeletingId(id)
-            await deleteLead(id)
-            setLeads(prev => prev.filter(l => l.id !== id))
-            if (selectedLead?.id === id) setSelectedLead(null)
-        } catch (err) {
-            alert('Failed to delete lead')
-        } finally {
-            setDeletingId(null)
-        }
+    const handleDeleteClick = (lead: DBProfile, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setLeadToDelete(lead)
     }
 
     const handleSendWelcome = async (lead: DBProfile) => {
@@ -164,12 +156,11 @@ export function LeadsList() {
                                             <div className="sm:col-span-4 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 {/* Quick Actions in row (optional, maybe just delete?) */}
                                                 <button
-                                                    onClick={(e) => handleDelete(lead.id, e)}
-                                                    disabled={deletingId === lead.id}
-                                                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                                    onClick={(e) => handleDeleteClick(lead, e)}
+                                                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                                     title="Delete Lead"
                                                 >
-                                                    {deletingId === lead.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </div>
@@ -296,7 +287,19 @@ export function LeadsList() {
                     </div>
                 </div>
 
-            </div>
+            </div >
+
+            {/* Delete Confirmation Modal */}
+            <DeleteLeadModal
+                lead={leadToDelete}
+                isOpen={!!leadToDelete}
+                onClose={() => setLeadToDelete(null)}
+                onDeleted={(id) => {
+                    setLeads(prev => prev.filter(l => l.id !== id))
+                    if (selectedLead?.id === id) setSelectedLead(null)
+                    setLeadToDelete(null)
+                }}
+            />
 
             {/* Lead Details Modal - Only triggers if button clicked */}
             {selectedLead && showModal && (

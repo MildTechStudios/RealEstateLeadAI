@@ -29,6 +29,21 @@ export function verifyToken(token: string): any {
     }
 }
 
+// Reset Token Generation (1 hour expiry)
+export function generateResetToken(agentId: string, slug: string): string {
+    return jwt.sign({ agentId, slug, purpose: 'password_reset' }, JWT_SECRET, { expiresIn: '1h' });
+}
+
+export function verifyResetToken(token: string): { agentId: string; slug: string } | null {
+    try {
+        const payload = jwt.verify(token, JWT_SECRET) as any;
+        if (payload.purpose !== 'password_reset') return null;
+        return { agentId: payload.agentId, slug: payload.slug };
+    } catch (err) {
+        return null;
+    }
+}
+
 // 3. Seeding / Migration Helper
 // Call this on server start to ensure all agents have a password
 export async function seedDefaultPasswords() {

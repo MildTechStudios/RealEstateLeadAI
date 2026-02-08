@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 import { getLeadBySlug, getLeadById, updateLead, getAgentBySlug } from '../services/db';
-import { hashPassword, verifyPassword, generateToken, verifyToken } from '../services/auth';
+import { hashPassword, verifyPassword, generateToken, verifyToken, generateResetToken, verifyResetToken } from '../services/auth';
 
 const router = Router();
 
@@ -76,6 +76,88 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         console.error('[Auth] Login error:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// FORGOT PASSWORD
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { slug } = req.body;
+
+        if (!slug) {
+            return res.status(400).json({ error: 'Slug is required' });
+        }
+
+        const { data: agent, error } = await getAgentBySlug(slug);
+
+        if (error || !agent) {
+            // Don't reveal if agent exists
+            return res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
+        }
+
+        if (!agent.primary_email) {
+            return res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
+        }
+
+        // Generate reset token
+        const resetToken = generateResetToken(agent.id, agent.website_slug);
+        const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+        const resetUrl = `${CLIENT_URL}/w/${agent.website_slug}/admin/reset-password?token=${resetToken}`;
+
+        // Send email
+        const { sendPasswordResetEmail } = await import('../services/email');
+        const result = await sendPasswordResetEmail({
+            agentName: agent.full_name,
+            agentEmail: agent.primary_email,
+            resetUrl
+        });
+
+        if (!result.success) {
+            console.error('[Auth] Failed to send reset email:', result.error);
+        }
+
+        res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
+
+    } catch (err) {
+        console.error('[Auth] Forgot password error:', err);
+        res.status(500).json({ error: 'Failed to process request' });
+    }
+});
+
+// RESET PASSWORD (with token)
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Token and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+
+        const payload = verifyResetToken(token);
+
+        if (!payload) {
+            return res.status(400).json({ error: 'Invalid or expired reset link' });
+        }
+
+        // Hash new password
+        const hashedPassword = await hashPassword(newPassword);
+
+        // Update DB
+        const result = await updateLead(payload.agentId, { password_hash: hashedPassword } as any);
+
+        if (!result.success) {
+            throw new Error(result.error);
+        }
+
+        res.json({ success: true, message: 'Password updated successfully', slug: payload.slug });
+
+    } catch (err) {
+        console.error('[Auth] Reset password error:', err);
+        res.status(500).json({ error: 'Failed to reset password' });
     }
 });
 

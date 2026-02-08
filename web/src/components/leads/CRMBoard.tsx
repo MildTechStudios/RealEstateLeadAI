@@ -9,14 +9,18 @@ import {
     DollarSign,
     Ban,
     ExternalLink,
-    Mail
+    Mail,
+    Trash2
 } from 'lucide-react'
+import { DeleteLeadModal } from './DeleteLeadModal'
+import { useState } from 'react'
 
 interface CRMBoardProps {
     leads: DBProfile[]
     emailLogs: EmailLog[]
     onSelectLead: (lead: DBProfile) => void
     loading: boolean
+    onLeadDeleted?: (id: string) => void
 }
 
 type Stage = 'New' | 'Delivered' | 'Opened' | 'Clicked' | 'Connected' | 'Paid' | 'Bounced' | 'Expired'
@@ -31,7 +35,8 @@ const STAGES: { id: Stage; label: string; icon: any; color: string; bg: string }
     { id: 'Bounced', label: 'Bounced', icon: Ban, color: 'text-red-500', bg: 'bg-red-500/10' },
 ]
 
-export function CRMBoard({ leads, emailLogs, onSelectLead, loading }: CRMBoardProps) {
+export function CRMBoard({ leads, emailLogs, onSelectLead, loading, onLeadDeleted }: CRMBoardProps) {
+    const [leadToDelete, setLeadToDelete] = useState<DBProfile | null>(null)
 
     // Helper to get sorted logs for a lead (Latest first)
     const getSortedLeadLogs = (lead: DBProfile) => {
@@ -125,6 +130,16 @@ export function CRMBoard({ leads, emailLogs, onSelectLead, loading }: CRMBoardPr
                                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-purple-500/0 to-pink-500/0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none" />
 
                                         <div className="flex items-center gap-4 mb-3 relative z-10">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setLeadToDelete(lead)
+                                                }}
+                                                className="absolute top-0 right-0 p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-20"
+                                                title="Delete Lead"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 overflow-hidden shrink-0 shadow-sm">
                                                 {lead.headshot_url ? (
                                                     <img src={lead.headshot_url} alt="" className="w-full h-full object-cover" />
@@ -173,6 +188,16 @@ export function CRMBoard({ leads, emailLogs, onSelectLead, loading }: CRMBoardPr
                     </div>
                 )
             })}
+
+            <DeleteLeadModal
+                lead={leadToDelete}
+                isOpen={!!leadToDelete}
+                onClose={() => setLeadToDelete(null)}
+                onDeleted={(id) => {
+                    if (onLeadDeleted) onLeadDeleted(id)
+                    setLeadToDelete(null)
+                }}
+            />
         </div>
     )
 }

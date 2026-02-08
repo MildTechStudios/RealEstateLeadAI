@@ -22,6 +22,9 @@ export function AgentInput({ url, onUrlChange, onSubmit, isLoading, buttonText }
             <p className="text-slate-400 text-sm mb-4">
                 Paste a Coldwell Banker agent profile URL to extract their contact information, photo, and social links.
             </p>
+            <p className="text-slate-400 text-sm mb-4">
+                Find agent profiles with the link below: <a href="https://www.coldwellbanker.com/find-agents" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">https://www.coldwellbanker.com/find-agents</a>
+            </p>
 
             <div className="flex gap-3">
                 <input
@@ -50,6 +53,6 @@ export function AgentInput({ url, onUrlChange, onSubmit, isLoading, buttonText }
                     )}
                 </button>
             </div>
-        </div>
+        </div >
     )
 }

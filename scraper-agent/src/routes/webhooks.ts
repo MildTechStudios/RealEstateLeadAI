@@ -62,22 +62,52 @@ router.post('/resend', async (req, res) => {
             return res.status(500).json({ error: error.message });
         }
 
-        // Start Trial on First Click
+        // Start Trial on First Click & Send Admin Access Email
         if (type === 'email.clicked' && updatedLog?.lead_id) {
             console.log(`[Webhook] Click detected for lead ${updatedLog.lead_id}. Checking trial status...`);
 
-            // Update only if trial_started_at is NULL
-            // Note: Supabase .is('col', null) works for filtering
-            const { error: trialError } = await db
+            // Get lead details first
+            const { data: lead } = await db
                 .from('scraped_agents')
-                .update({ trial_started_at: new Date().toISOString() })
+                .select('id, full_name, primary_email, website_slug, trial_started_at')
                 .eq('id', updatedLog.lead_id)
-                .is('trial_started_at', null);
+                .single();
 
-            if (trialError) {
-                console.error('[Webhook] Failed to start trial:', trialError)
+            // Only proceed if this is the FIRST click (trial not yet started)
+            if (lead && !lead.trial_started_at) {
+                console.log(`[Webhook] First click for ${lead.full_name}. Starting trial and sending admin access email...`);
+
+                // Start trial
+                const { error: trialError } = await db
+                    .from('scraped_agents')
+                    .update({ trial_started_at: new Date().toISOString() })
+                    .eq('id', updatedLog.lead_id);
+
+                if (trialError) {
+                    console.error('[Webhook] Failed to start trial:', trialError);
+                }
+
+                // Send admin access email
+                if (lead.primary_email && lead.website_slug) {
+                    const { sendAdminAccessEmail } = await import('../services/email');
+                    const CLIENT_URL = process.env.CLIENT_URL || 'https://siteo.io';
+                    const DEFAULT_PASSWORD = process.env.DEFAULT_AGENT_PASSWORD || 'welcome123';
+
+                    const result = await sendAdminAccessEmail({
+                        agentName: lead.full_name,
+                        agentEmail: lead.primary_email,
+                        adminUrl: `${CLIENT_URL}/w/${lead.website_slug}/admin`,
+                        defaultPassword: DEFAULT_PASSWORD
+                    });
+
+                    if (result.success) {
+                        console.log(`[Webhook] Admin access email sent to ${lead.primary_email}`);
+                    } else {
+                        console.error('[Webhook] Failed to send admin access email:', result.error);
+                    }
+                }
             } else {
-                console.log('[Webhook] Trial check/activation complete');
+                console.log('[Webhook] Trial already started or lead not found, skipping admin access email');
             }
         }
 

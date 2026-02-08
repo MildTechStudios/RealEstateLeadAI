@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { LeadDetailsModal } from '../leads/LeadDetailsModal'
 import { CRMBoard } from '../leads/CRMBoard'
-import { getLeads, type DBProfile } from '../../services/api'
+import { getLeads, deleteEmailLogs, type DBProfile } from '../../services/api'
 import type { EmailLog } from '../../types/email'
 
 // Types based on Resend API response
@@ -127,6 +127,22 @@ export function EmailLogs() {
                         }
                     }}
                     loading={loading}
+                    onLeadDeleted={async (id) => {
+                        // For ghost leads, delete email logs by recipient
+                        if (id.startsWith('ghost-')) {
+                            const email = id.replace('ghost-', '')
+                            try {
+                                await deleteEmailLogs(email)
+                                // Refresh data to remove deleted logs
+                                fetchData()
+                            } catch (err) {
+                                console.error('Failed to delete email logs:', err)
+                            }
+                        } else {
+                            // For real leads, just refresh data
+                            fetchData()
+                        }
+                    }}
                 />
             </div>
 

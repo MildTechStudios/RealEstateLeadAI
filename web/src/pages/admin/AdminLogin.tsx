@@ -69,8 +69,11 @@ export function AdminLogin() {
                         {loading ? 'Verifying...' : 'Login'}
                     </button>
 
-                    <div className="text-center mt-4">
-                        <a href={`/w/${slug}`} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+                    <div className="text-center mt-4 space-y-2">
+                        <a href={`/w/${slug}/admin/reset-password`} className="block text-xs text-indigo-500 hover:text-indigo-400 transition-colors">
+                            Forgot Password?
+                        </a>
+                        <a href={`/w/${slug}`} className="block text-xs text-slate-400 hover:text-slate-600 transition-colors">
                             ← Back to Website
                         </a>
                     </div>

@@ -75,4 +75,54 @@ router.post('/create-checkout-session', async (req, res) => {
     }
 });
 
+// POST /api/stripe/cancel-subscription
+router.post('/cancel-subscription', async (req, res) => {
+    try {
+        const { leadId } = req.body;
+
+        if (!leadId) {
+            return res.status(400).json({ error: 'Missing leadId' });
+        }
+
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error('[Stripe] Missing STRIPE_SECRET_KEY');
+            return res.status(500).json({ error: 'Payment system not configured' });
+        }
+
+        // Get Lead to find subscription ID
+        const { data: lead, error } = await supabase
+            .from('scraped_agents')
+            .select('id, full_name, stripe_subscription_id')
+            .eq('id', leadId)
+            .single();
+
+        if (error || !lead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+
+        if (!lead.stripe_subscription_id) {
+            return res.status(400).json({ error: 'No active subscription found' });
+        }
+
+        console.log(`[Stripe] Canceling subscription for ${lead.full_name}: ${lead.stripe_subscription_id}`);
+
+        // Cancel the subscription at period end (graceful cancellation)
+        await stripe.subscriptions.update(lead.stripe_subscription_id, {
+            cancel_at_period_end: true
+        });
+
+        // Update DB to reflect pending cancellation
+        await supabase
+            .from('scraped_agents')
+            .update({ subscription_status: 'canceling' })
+            .eq('id', leadId);
+
+        res.json({ success: true, message: 'Subscription will be canceled at end of billing period' });
+
+    } catch (err: any) {
+        console.error('[Stripe] Cancel subscription error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export { router as stripeRoutes };
