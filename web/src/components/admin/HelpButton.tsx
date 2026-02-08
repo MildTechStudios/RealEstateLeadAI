@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { HelpCircle, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { HelpCircle, X, ChevronDown, ChevronUp, PlayCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export function HelpButton() {
@@ -85,52 +85,78 @@ export function HelpButton() {
                                                 className="overflow-hidden"
                                             >
                                                 <div className="p-4 pt-0 text-slate-300 text-sm space-y-3 border-t border-slate-800/50">
-                                                    <p className="mt-2">
-                                                        Connecting your custom domain (e.g., <code>yourname.com</code>) makes your website look professional.
+                                                    <p className="mt-2 text-slate-400">
+                                                        1. Enter your domain name in the admin dashboard (e.g., <code>yourname.com</code>).
                                                     </p>
-                                                    <ol className="list-decimal list-inside space-y-1 ml-1 text-slate-400">
-                                                        <li>Log in to your domain provider (GoDaddy, Namecheap, etc.).</li>
-                                                        <li>Go to <strong>DNS Settings</strong> or <strong>DNS Management</strong>.</li>
-                                                        <li>Add a <strong>CNAME Record</strong>:
-                                                            <ul className="list-disc list-inside ml-4 mt-1 mb-1 text-indigo-300">
-                                                                <li>Type: <strong>CNAME</strong></li>
-                                                                <li>Name/Host: <strong>www</strong> (or @ for root)</li>
-                                                                <li>Value/Target: <strong>cname.siteo.io</strong></li>
-                                                            </ul>
-                                                        </li>
-                                                        <li>Save changes. It may take up to 24-48 hours to propagate.</li>
-                                                    </ol>
+                                                    <p className="text-slate-400">
+                                                        2. We will provide you with specific <strong>DNS Records</strong> (usually a CNAME or TXT record).
+                                                    </p>
+                                                    <p className="text-slate-400">
+                                                        3. Copy and paste specific values into your domain provider's (GoDaddy, Namecheap, etc.) DNS Settings.
+                                                    </p>
 
-                                                    {/* Video Embed */}
-                                                    <div className="mt-4 rounded-lg overflow-hidden border border-slate-700 bg-black aspect-video relative group cursor-pointer">
-                                                        <iframe
-                                                            width="100%"
-                                                            height="100%"
-                                                            src="https://www.youtube.com/embed/BUPRQaZ7rYA?si=Qb3LTcoolSJWVqyW"
-                                                            title="How to connect domain"
-                                                            frameBorder="0"
-                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                            allowFullScreen
-                                                            className="absolute inset-0 w-full h-full"
-                                                        ></iframe>
+                                                    {/* Video Toggle */}
+                                                    <div className="pt-2">
+                                                        <details className="group">
+                                                            <summary className="flex items-center gap-2 text-indigo-400 font-medium cursor-pointer hover:text-indigo-300 transition-colors select-none">
+                                                                <PlayCircle className="w-4 h-4" />
+                                                                Watch Video Tutorial
+                                                            </summary>
+                                                            <div className="mt-3 rounded-lg overflow-hidden border border-slate-700 bg-black aspect-video relative">
+                                                                <iframe
+                                                                    width="100%"
+                                                                    height="100%"
+                                                                    src="https://www.youtube.com/embed/BUPRQaZ7rYA?si=Qb3LTcoolSJWVqyW"
+                                                                    title="How to connect domain"
+                                                                    frameBorder="0"
+                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                                    allowFullScreen
+                                                                    className="absolute inset-0 w-full h-full"
+                                                                ></iframe>
+                                                            </div>
+                                                        </details>
                                                     </div>
-                                                    <p className="text-xs text-slate-500 italic mt-2">
-                                                        Watch the video above for a step-by-step walkthrough.
-                                                    </p>
                                                 </div>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
                                 </div>
 
-                                {/* Placeholder for other FAQs */}
-                                <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/30 opacity-60">
+                                {/* FAQ Item: Cancellation Policy */}
+                                <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/30">
                                     <button
-                                        className="w-full flex items-center justify-between p-4 text-left cursor-not-allowed"
-                                        disabled
+                                        onClick={() => toggleQuestion('cancellation')}
+                                        className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-800/50 transition-colors"
                                     >
-                                        <span className="font-semibold text-slate-400">More guides coming soon...</span>
+                                        <span className="font-semibold text-slate-200">Cancellation Policy</span>
+                                        {expandedQuestion === 'cancellation' ? (
+                                            <ChevronUp className="w-5 h-5 text-slate-400" />
+                                        ) : (
+                                            <ChevronDown className="w-5 h-5 text-slate-400" />
+                                        )}
                                     </button>
+
+                                    <AnimatePresence>
+                                        {expandedQuestion === 'cancellation' && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="p-4 pt-0 text-slate-300 text-sm space-y-3 border-t border-slate-800/50">
+                                                    <p className="mt-2 text-slate-400">
+                                                        We believe in freedom and flexibility. There are <strong>no long-term contracts</strong> or hidden fees.
+                                                    </p>
+                                                    <ul className="list-disc list-inside space-y-1 ml-1 text-slate-400">
+                                                        <li>You can cancel your subscription at any time directly from the <strong>Settings</strong> tab.</li>
+                                                        <li>If you cancel, your website will remain active until the end of your current billing period.</li>
+                                                        <li>You will not be charged again after cancellation.</li>
+                                                    </ul>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
                         </motion.div>
