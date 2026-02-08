@@ -57,11 +57,8 @@ router.post('/resend', async (req, res) => {
 
         if (error) {
             console.error('[Webhook] DB Update Error:', error);
-            // Don't return 500, just log it. Resend will retry if 500.
-            // But if it's a logic error (e.g. not found), we should probably returning 200 to stop retries?
-            // Actually, if update fails (e.g. row not found), error is likely null but data is null?
-            // .single() throws if 0 rows.
-            return res.status(200).json({ message: 'Log not found or update failed' });
+            // Return 404 so Resend retries (handling race condition where webhook arrives before insert)
+            return res.status(404).json({ message: 'Log not found or update failed' });
         }
 
         console.log(`[Webhook] DB Update Success. LeadID: ${updatedLog?.lead_id}. Checking trial trigger...`);
