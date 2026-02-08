@@ -18,7 +18,7 @@ import { BulkImport } from './components/import/BulkImport'
 import { EmailLogs } from './components/admin/EmailLogs'
 import { Background } from './components/ui/Background'
 import { Tabs } from './components/layout/Tabs'
-import { HelpButton } from './components/admin/HelpButton'
+
 import { extractProfile, isValidCBUrl } from './services/api'
 import type { CBAgentProfile } from './types/agent'
 import './App.css'
@@ -238,7 +238,6 @@ function App() {
           )}
         </main>
       </div>
-      <HelpButton />
     </div>
   )
 }

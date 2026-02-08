@@ -4,6 +4,7 @@ import { LogOut, Zap, LayoutDashboard, Settings, BarChart, Sparkles, Clock, Aler
 import { getWebsiteBySlug, createCheckoutSession, cancelSubscription, type DBProfile } from '../../services/api'
 import { adminApi } from '../../services/adminApi'
 import { DomainManager } from '../../components/admin/DomainManager'
+import { HelpButton } from '../../components/admin/HelpButton'
 
 export function AdminDashboard() {
     const { slug } = useParams()
@@ -356,6 +357,7 @@ export function AdminDashboard() {
                     </div>
                 </div>
             </main>
+            <HelpButton />
         </div>
     )
 }
