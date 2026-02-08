@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
-import { Mail, Phone, MapPin, Linkedin, Facebook, Instagram, Twitter, Youtube, TrendingUp, ArrowDown, Home, BarChart2, Building, BadgeCheck, Minus, Sparkles } from 'lucide-react'
+import { Mail, Phone, MapPin, Linkedin, Facebook, Instagram, Twitter, Youtube, TrendingUp, ArrowDown, Home, BarChart2, Building, BadgeCheck, Minus } from 'lucide-react'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
-import { getWebsiteBySlug, createCheckoutSession, type DBProfile } from '../services/api'
+import { getWebsiteBySlug, type DBProfile } from '../services/api'
 import { getThemeConfig } from '../utils/theme'
 import { FloatingNavbar } from '../components/website/FloatingNavbar'
 import { ContactForm } from '../components/website/ContactForm'
@@ -35,21 +35,11 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
     // Admin State
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
-    const [claiming, setClaiming] = useState(false)
+
 
     // Stripe Checkout Handler
-    const handleClaim = async () => {
-        if (!agent) return
-        setClaiming(true)
-        try {
-            const { url } = await createCheckoutSession(agent.id, window.location.href)
-            if (url) window.location.href = url
-        } catch (err: any) {
-            console.error('Checkout error:', err)
-            alert('Failed to start checkout process. Please try again.')
-            setClaiming(false)
-        }
-    }
+    // Handle claim removed
+
 
     // Handle Payment Success
     useEffect(() => {
@@ -1203,26 +1193,7 @@ export function PublicWebsite({ slug: propSlug }: { slug?: string }) {
                 />
 
                 {/* Claim Banner - Only show if not paid and not editing */}
-                {!loading && agent && !agent.is_paid && !isEditing && (
-                    <div className="fixed bottom-0 left-0 right-0 bg-indigo-600 text-white p-4 z-50 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg border-t border-indigo-500 animate-in slide-in-from-bottom-full">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/10 rounded-full">
-                                <Sparkles className="w-5 h-5 text-yellow-300" />
-                            </div>
-                            <div>
-                                <p className="font-semibold text-lg">Agent Preview Mode</p>
-                                <p className="text-sm text-indigo-100">Claim this profile to activate your professional website and unlock lead generation.</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleClaim}
-                            disabled={claiming}
-                            className="px-6 py-2 bg-white text-indigo-600 font-bold rounded-lg hover:bg-indigo-50 transition-colors shadow-md disabled:opacity-50 whitespace-nowrap"
-                        >
-                            {claiming ? 'Processing...' : 'Activate Now - $29/mo'}
-                        </button>
-                    </div>
-                )}
+                {/* Claim Banner Removed */}
             </div>
         </GoogleReCaptchaProvider>
     )
